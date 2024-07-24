@@ -15,3 +15,9 @@
 local.properties
 .idea
 .idea/
+
+sample.nativeblocks.properties
+/sample.nativeblocks.properties
+
+*.gpg
+/*.gpg
