@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "compiler-android"
 include(":app")
+include(":compiler")
