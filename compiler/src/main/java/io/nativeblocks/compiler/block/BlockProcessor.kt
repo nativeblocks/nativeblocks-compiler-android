@@ -1,5 +1,6 @@
 package io.nativeblocks.compiler.block
 
+import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -20,15 +21,21 @@ import io.nativeblocks.compiler.meta.Slot
 import io.nativeblocks.compiler.util.capitalize
 import io.nativeblocks.compiler.util.getAnnotation
 import io.nativeblocks.compiler.writeJson
+import java.io.OutputStream
 
-private const val BLOCK_ANNOTATION_SYMBOL = "io.nativeblocks.core.type.NativeBlock"
+private const val BLOCK_ANNOTATION = "io.nativeblocks.core.type.NativeBlock"
 private const val PACKAGE_NAME_SUFFIX = ".integration.consumer.block"
 
-class BlockProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
+private const val BLOCK_PROP_ANNOTATION_SYMBOL = "NativeBlockProp"
+private const val BLOCK_DATA_ANNOTATION_SYMBOL = "NativeBlockData"
+private const val BLOCK_EVENT_ANNOTATION_SYMBOL = "NativeBlockEvent"
+private const val BLOCK_SLOT_ANNOTATION_SYMBOL = "NativeBlockSlot"
+
+internal class BlockProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver
-            .getSymbolsWithAnnotation(BLOCK_ANNOTATION_SYMBOL)
+            .getSymbolsWithAnnotation(BLOCK_ANNOTATION)
             .filterIsInstance<KSFunctionDeclaration>()
 
         val basePackageName = environment.options["basePackageName"].orEmpty()
@@ -37,6 +44,8 @@ class BlockProcessor(private val environment: SymbolProcessorEnvironment) : Symb
         if (basePackageName.isEmpty() || moduleName.isEmpty()) {
             throw IllegalArgumentException("Please provide basePackageName and moduleName through the ksp compiler option, https://kotlinlang.org/docs/ksp-quickstart.html#pass-options-to-processors")
         }
+
+        val fullPackageName = (basePackageName + PACKAGE_NAME_SUFFIX)
 
         if (!symbols.iterator().hasNext()) return emptyList()
         val sources = resolver.getAllFiles().toList().toTypedArray()
@@ -57,7 +66,7 @@ class BlockProcessor(private val environment: SymbolProcessorEnvironment) : Symb
                     keyType = integrationJson.keyType
                 )
             )
-            val packageName = (basePackageName + PACKAGE_NAME_SUFFIX).replace(".", "/")
+            val packageName = fullPackageName.replace(".", "/")
             writeJson(
                 codeGenerator = environment.codeGenerator,
                 packageName = packageName + "/" + function.simpleName.asString().capitalize(),
@@ -79,7 +88,7 @@ class BlockProcessor(private val environment: SymbolProcessorEnvironment) : Symb
                         throw IllegalArgumentException("You can not use all annotations at the same time, please use one")
                     }
                     when (val annotation = annotations.first().shortName.asString()) {
-                        "NativeBlockProp" -> {
+                        BLOCK_PROP_ANNOTATION_SYMBOL -> {
                             val propertyJson = generatePropertyJson(
                                 resolver = resolver,
                                 symbol = param.getAnnotation(annotation),
@@ -89,45 +98,64 @@ class BlockProcessor(private val environment: SymbolProcessorEnvironment) : Symb
                             properties.add(propertyJson)
                         }
 
-                        "NativeBlockData" -> {
-                            val dataItem = generateDataJson(
+                        BLOCK_DATA_ANNOTATION_SYMBOL -> {
+                            val dataJson = generateDataJson(
                                 symbol = param.getAnnotation(annotation),
                                 param = param
                             )
-                            data.add(dataItem)
+                            data.add(dataJson)
                         }
 
-                        "NativeBlockEvent" -> {
-                            val event = generateEventJson(
+                        BLOCK_EVENT_ANNOTATION_SYMBOL -> {
+                            val eventJson = generateEventJson(
                                 symbol = param.getAnnotation(annotation),
                                 param = param,
                                 kind = integrationJson.kind
                             )
-                            events.add(event)
+                            events.add(eventJson)
                         }
 
-                        "NativeBlockSlot" -> {
-                            val slot = generateSlotJson(
+                        BLOCK_SLOT_ANNOTATION_SYMBOL -> {
+                            val slotJson = generateSlotJson(
                                 symbol = param.getAnnotation(annotation),
                                 param = param,
                             )
-                            slots.add(slot)
+                            slots.add(slotJson)
                         }
                     }
                 }
             }
+            val fileName = function.simpleName.asString() + "Block"
+            val file: OutputStream = environment.codeGenerator.createNewFile(
+                dependencies = Dependencies(false, sources = sources),
+                packageName = fullPackageName,
+                fileName = fileName,
+            )
+            function.accept(
+                BlockVisitor(
+                    file = file,
+                    fileName = fileName,
+                    packageName = fullPackageName,
+                    consumerPackageName = function.packageName.asString(),
+                    function = function,
+                    properties = properties,
+                    events = events,
+                    data = data,
+                    slots = slots,
+                ), Unit
+            )
+            file.close()
         }
         return symbols.filterNot { it.validate() }.toList()
     }
 
     private fun getNativeblocksAnnotations(param: KSValueParameter): List<KSAnnotation> {
         val nativeblocksAnnotations = param.annotations.filter {
-            it.shortName.asString() == "NativeBlockData" ||
-                    it.shortName.asString() == "NativeBlockSlot" ||
-                    it.shortName.asString() == "NativeBlockEvent" ||
-                    it.shortName.asString() == "NativeBlockProp"
+            it.shortName.asString() == BLOCK_DATA_ANNOTATION_SYMBOL ||
+                    it.shortName.asString() == BLOCK_SLOT_ANNOTATION_SYMBOL ||
+                    it.shortName.asString() == BLOCK_EVENT_ANNOTATION_SYMBOL ||
+                    it.shortName.asString() == BLOCK_PROP_ANNOTATION_SYMBOL
         }
         return nativeblocksAnnotations.toList()
     }
-
 }
