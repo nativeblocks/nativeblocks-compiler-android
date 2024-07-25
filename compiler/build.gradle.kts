@@ -12,4 +12,5 @@ java {
 dependencies {
     implementation("com.google.devtools.ksp:symbol-processing-api:1.9.22-1.0.17")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("com.squareup:kotlinpoet:1.18.1")
 }

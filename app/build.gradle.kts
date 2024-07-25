@@ -46,6 +46,11 @@ android {
     }
 }
 
+ksp {
+    arg("basePackageName", "io.nativeblocks.sampleapp")
+    arg("moduleName", "Demo")
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")
@@ -53,4 +58,5 @@ dependencies {
     implementation("androidx.compose.animation:animation:1.6.8")
     implementation("androidx.compose.ui:ui-tooling:1.6.8")
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.nativeblocks:nativeblocks-android:1.1.0")
 }
