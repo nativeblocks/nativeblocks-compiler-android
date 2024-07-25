@@ -145,6 +145,14 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
             )
             file.close()
         }
+        val fileName = "${moduleName}BlockProvider"
+        val file: OutputStream = environment.codeGenerator.createNewFile(
+            dependencies = Dependencies(false, sources = sources),
+            packageName = "${(basePackageName + PACKAGE_NAME_SUFFIX)}.provider",
+            fileName = fileName,
+        )
+        BlockProviderVisitor(file, fileName, (basePackageName + PACKAGE_NAME_SUFFIX), integrations)
+        file.close()
         return symbols.filterNot { it.validate() }.toList()
     }
 
