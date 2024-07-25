@@ -3,7 +3,10 @@ package io.nativeblocks.compiler.block
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
@@ -17,176 +20,114 @@ internal class BlockVisitor(
     private val fileName: String,
     private val packageName: String,
     private val consumerPackageName: String,
-    private val function: KSFunctionDeclaration,
-    private val properties: MutableList<Property>,
-    private val events: MutableList<Event>,
-    private val data: MutableList<Data>,
-    private val slots: MutableList<Slot>,
+    private val metaProperties: MutableList<Property>,
+    private val metaEvents: MutableList<Event>,
+    private val metaData: MutableList<Data>,
+    private val metaSlots: MutableList<Slot>,
 ) : KSVisitorVoid() {
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
-        val importComposable = MemberName("androidx.compose.runtime.Composable", "Composable")
-        val importBlockProps = MemberName("io.nativeblocks.core.api.provider.block.BlockProps", "BlockProps")
-        val importINativeBlock = MemberName("io.nativeblocks.core.api.provider.block.INativeBlock", "INativeBlock")
-        val importBlockProvideEvent = MemberName("io.nativeblocks.core.util.*", "blockProvideEvent")
-        val importBlockFunction =
-            MemberName(consumerPackageName + "." + function.simpleName.asString(), function.simpleName.asString())
+        val importComposable = ClassName("androidx.compose.runtime", "Composable")
+        val importBlockProps = ClassName("io.nativeblocks.core.api.provider.block", "BlockProps")
+        val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
+        val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
+        val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
+        val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
 
-        val blockClass = TypeSpec.classBuilder(ClassName(packageName, fileName))
-            .addSuperinterface(ClassName("io.nativeblocks.core.api.provider.block.INativeBlock", "INativeBlock"))
+        val func = FunSpec.builder("BlockView")
+            .addModifiers(KModifier.OVERRIDE)
+            .addAnnotation(importComposable)
+            .addParameter("blockProps", importBlockProps)
+            .addStatement("val visibility = blockProps.variables?.get(blockProps.block?.visibility)")
+            .beginControlFlow("""if ((visibility?.value ?: "true") == "false")""")
+            .addStatement("return")
+            .endControlFlow()
+            .addComment("block meta fields")
+            .addCode(
+                """
+                    |val data = blockProps.block?.data ?: mapOf()
+                    |val properties = blockProps.block?.properties ?: mapOf()
+                    |val slots = blockProps.block?.slots ?: mapOf()
+                    |val action = blockProps.actions?.get(blockProps.block?.key)
+                """.trimMargin()
+            )
 
-            .build()
-    }
-
-    private fun writeBody() {
-        file += """
-        |    @Composable
-        |    override fun BlockView(blockProps: BlockProps) {
-        |        val visibility = blockProps.variables?.get(blockProps.block?.visibility)
-        |        if ((visibility?.value ?: "true") == "false") {
-        |            return
-        |        }
-        |        val data = blockProps.block?.data ?: mapOf()
-        |        val properties = blockProps.block?.properties ?: mapOf()
-        |        val slots = blockProps.block?.slots ?: mapOf()
-        |        val action = blockProps.actions?.get(blockProps.block?.key)
-        |        
-        """.trimMargin()
-
-        file += """
-            |
-            |        // block data
-            |
-        """.trimMargin()
-        data.forEach { dataItem ->
-            file += """
-            |        val ${dataItem.key} = blockProps.variables?.get(data["${dataItem.key}"]?.value)
-            |
-            """.trimMargin()
+        func.addComment("block data")
+        metaData.forEach {
+            func.addStatement("val ${it.key} = blockProps.variables?.get(data[\"${it.key}\"]?.value)")
         }
-
-        file += """
-            |        // block properties
-            |
-        """.trimMargin()
-        properties.forEach { prop ->
-            file += """
-            |        val ${prop.key} = ${propTypeMapper(prop)}
-            |
-            """.trimMargin()
+        func.addComment("block properties")
+        metaProperties.forEach {
+            func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
         }
-
-        file += """
-            |        // block slots
-            |
-        """.trimMargin()
-        slots.forEach { slot ->
-            file += """
-            |        val ${slot.slot} = slots["${slot.slot}"]
-            |
-            """.trimMargin()
+        func.addComment("block slots")
+        metaSlots.forEach {
+            func.addStatement("val ${it.slot} = slots[\"${it.slot}\"]")
         }
-
-        file += """
-            |        // block events
-            |
-        """.trimMargin()
-        events.forEach { event ->
-            file += """
-            |        val ${event.event} = blockProvideEvent(blockProps, action.orEmpty(), "${event.event}")
-            |
-            """.trimMargin()
+        func.addComment("block events")
+        metaEvents.forEach {
+            func.addStatement("val ${it.event} = blockProvideEvent(blockProps, action.orEmpty(), \"${it.event}\")")
         }
+        func.addComment("call the function")
 
-        file += """
-            |        // call the function
-            |        ${function.simpleName.asString()}(
-            |        
-            """.trimMargin()
-
-        data.map {
-            file += """
-            |    ${it.key} = ${dataTypeMapper(it)},
-            |        
-            """.trimMargin()
+        func.addCode(function.simpleName.asString()).addCode("(")
+            .addCode(CodeBlock.builder().indent().build())
+            .addStatement("")
+        metaData.map {
+            func.addStatement("${it.key} = ${dataTypeMapper(it)},")
         }
-
-        properties.map {
-            file += """
-            |    ${it.key} = ${it.key},
-            |        
-            """.trimMargin()
+        metaProperties.map {
+            func.addStatement("${it.key} = ${it.key},")
         }
-
-        slots.forEach { sl ->
-            val slotArg = function.parameters.find { it.name?.asString() == sl.slot }
+        metaSlots.map {
+            val slotArg = function.parameters.find { arg -> arg.name?.asString() == it.slot }
             val type = slotArg?.type?.resolve()
 
             if (type?.isFunctionType == false) {
                 throw IllegalArgumentException("Slot should be a composable function")
             }
 
-            val blockIndexes = type?.arguments?.filter {
-                it.type?.resolve()?.declaration?.simpleName?.asString() == "BlockIndex"
+            val blockIndexes = type?.arguments?.filter { ksArg ->
+                ksArg.type?.resolve()?.declaration?.simpleName?.asString() == "BlockIndex"
             }
             if (blockIndexes.isNullOrEmpty()) {
                 throw IllegalArgumentException("Slot function has to use BlockIndex type, Please make sure the function defined like: @Composable (index: BlockIndex) -> Unit")
             }
-
-            file += """
-            |    ${sl.slot} = @Composable { index -> """.trimMargin()
-
-            file += """
-                |
-                |                if (${sl.slot} != null) {
-                |                    blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${sl.slot}, index)
-                |                }
-                |
-                """.trimMargin()
-
-            file += """
-            |            },
-            |        
-            """.trimMargin()
+            func.addStatement("${it.slot} = @Composable { index -> ")
+            func.beginControlFlow("if (${it.slot} != null)")
+            func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
+            func.endControlFlow()
+            func.addStatement("},")
         }
-
-        events.forEach { ev ->
-            val eventArg = function.parameters.find { it.name?.asString() == ev.event }
+        metaEvents.forEach {
+            val eventArg = function.parameters.find { arg -> arg.name?.asString() == it.event }
             val eventArgSize = eventArg?.type?.resolve()?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
             items.removeLast()
 
-            file += """
-            |    ${ev.event} = { ${items.joinToString()} -> """.trimMargin()
-
-            ev.dataBinding.forEachIndexed { index, dataBound ->
-                file += """
-                |
-                |                val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())
-                |                if (${dataBound}Updated != null) {
-                |                    blockProps.onVariableChange?.invoke(${dataBound}Updated)
-                |                }
-                |        
-                """.trimMargin()
+            func.addStatement("${it.event} = { ${items.joinToString()} ->")
+            it.dataBinding.forEachIndexed { index, dataBound ->
+                func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
+                    .beginControlFlow("if (${dataBound}Updated != null)")
+                    .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
+                    .endControlFlow()
             }
-
-            file += """
-            |    
-            |                ${ev.event}?.invoke()
-            |            },
-            """.trimMargin()
+            func.addStatement("${it.event}?.invoke()")
+            func.addStatement("},")
         }
+        func.addCode(")")
 
-        file += """
-        |
-        |        )
-        |
-        """.trimMargin()
-
-        file += """
-        |    }
-        |
-        """.trimMargin()
+        val blockClass = FileSpec.builder(packageName, fileName)
+            .addImport(importBlockFunction, "")
+            .addImport(importBlockFindWindowSizeClass, "")
+            .addImport(importBlockProvideEvent, "")
+            .addType(
+                TypeSpec.classBuilder(fileName)
+                    .addSuperinterface(importINativeBlock)
+                    .addFunction(func.build())
+                    .build()
+            ).build()
+        file += blockClass.toString()
     }
 
     private fun propTypeMapper(prop: Property): Any {

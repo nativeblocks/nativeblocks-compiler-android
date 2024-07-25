@@ -137,11 +137,10 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                     fileName = fileName,
                     packageName = fullPackageName,
                     consumerPackageName = function.packageName.asString(),
-                    function = function,
-                    properties = properties,
-                    events = events,
-                    data = data,
-                    slots = slots,
+                    metaProperties = properties,
+                    metaEvents = events,
+                    metaData = data,
+                    metaSlots = slots,
                 ), Unit
             )
             file.close()
