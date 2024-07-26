@@ -52,6 +52,7 @@ internal class BlockVisitor(
                 """.trimMargin()
             )
 
+        func.addStatement("")
         func.addComment("block data")
         metaData.forEach {
             func.addStatement("val ${it.key} = blockProps.variables?.get(data[\"${it.key}\"]?.value)")
