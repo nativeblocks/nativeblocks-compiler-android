@@ -125,6 +125,32 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                     }
                 }
             }
+
+            writeJson(
+                codeGenerator = environment.codeGenerator,
+                packageName = fullPackageName.replace(".", "/") + "/" + function.simpleName.asString().capitalize(),
+                fileName = "properties",
+                json = properties
+            )
+            writeJson(
+                codeGenerator = environment.codeGenerator,
+                packageName = fullPackageName.replace(".", "/") + "/" + function.simpleName.asString().capitalize(),
+                fileName = "events",
+                json = events
+            )
+            writeJson(
+                codeGenerator = environment.codeGenerator,
+                packageName = fullPackageName.replace(".", "/") + "/" + function.simpleName.asString().capitalize(),
+                fileName = "data",
+                json = data
+            )
+            writeJson(
+                codeGenerator = environment.codeGenerator,
+                packageName = fullPackageName.replace(".", "/") + "/" + function.simpleName.asString().capitalize(),
+                fileName = "slots",
+                json = slots
+            )
+
             val fileName = function.simpleName.asString() + "Block"
             val file: OutputStream = environment.codeGenerator.createNewFile(
                 dependencies = Dependencies(false, sources = sources),
@@ -148,7 +174,7 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
         val fileName = "${moduleName}BlockProvider"
         val file: OutputStream = environment.codeGenerator.createNewFile(
             dependencies = Dependencies(false, sources = sources),
-            packageName = "${(basePackageName + PACKAGE_NAME_SUFFIX)}.provider",
+            packageName = "$fullPackageName.provider",
             fileName = fileName,
         )
         BlockProviderVisitor(file, fileName, (basePackageName + PACKAGE_NAME_SUFFIX), integrations)
