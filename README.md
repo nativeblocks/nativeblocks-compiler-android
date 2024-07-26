@@ -9,7 +9,7 @@ Before starting we need to add necessary dependencies
 
 [Add KSP](https://kotlinlang.org/docs/ksp-quickstart.html#add-a-processor)
 
-```
+```groovy
 implementation ("io.nativeblocks:nativeblocks-android:[latest-version]")
 ksp ("io.nativeblocks:nativeblocks-compiler-android:[latest-version]")
 ```
@@ -32,7 +32,7 @@ usable as building blocks in a visual editor.
 
 **Example:**
 
-```
+```kotlin
 @NativeBlock(name = "X button", keyType = "XBUTTON", description = "This is a button")
 ```
 
@@ -47,7 +47,7 @@ usable as building blocks in a visual editor.
 
 **Example:**
 
-```
+```kotlin
 @NativeBlockProp( description = "Button size", valuePicker = NativeBlockValuePicker. DROPDOWN,  valuePickerOptions = [ NativeBlockValuePickerOption( " S" ,  "Small"), NativeBlockValuePickerOption( " M" ,  "Medium"), NativeBlockValuePickerOption( " L" ,  "Large") ] )
 ```
 
@@ -61,7 +61,7 @@ usable as building blocks in a visual editor.
 
 **Example:**
 
-```
+```kotlin
 @NativeBlockData( description = "Button text" )
 ```
 
@@ -75,7 +75,7 @@ usable as building blocks in a visual editor.
 
 **Example:**
 
-```
+```kotlin
 @NativeBlockSlot( description = "Button leading icon" )
 ```
 
@@ -88,13 +88,13 @@ usable as building blocks in a visual editor.
 * **`description`:** (Optional) A description of the event.
 
 **Example:**
-```
+```kotlin
 @NativeBlockEvent( description = "Button on click" )
 ```
 
 This example demonstrates a simple button block with configurable properties, slots for icons, and a click event.
 
-```
+```kotlin
 @NativeBlock(
     name = "X button",
     keyType = "XBUTTON",
