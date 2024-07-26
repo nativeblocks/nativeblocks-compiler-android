@@ -23,9 +23,9 @@ ksp {
 }
 ```
 
-### [How block it works on Block](/docs/block)
+### [How block it works on Block](/docs/block.md)
 
-### [How block it works on Action](/docs/action)
+### [How block it works on Action](/docs/action.md)
 
 ### Usage
 
