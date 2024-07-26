@@ -125,16 +125,22 @@ internal fun generateEventJson(
 ): Event {
     val description = symbol.getArgument<String>("description")
     val dataBinding = symbol.getArgument<ArrayList<String>>("dataBinding")
+    val then = if (kind == "BLOCK") {
+        "io.nativeblocks.core.type.Then.End"
+    } else {
+        symbol.getArgument<Any>("then").toString()
+    }
     val name = if (kind == "BLOCK") {
         param.name?.asString().orEmpty()
     } else {
-        TODO("Handle here for actions")
+        thenMapper(then)
     }
     val eventJson = Event(
         event = name,
         description = description,
         functionName = param.name?.asString().orEmpty(),
         dataBinding = dataBinding,
+        then = thenMapper(then)
     )
     return eventJson
 }
@@ -178,6 +184,17 @@ internal inline fun <reified T> writeJson(
     file.flush()
 }
 
+private fun thenMapper(then: String): String {
+    val cn = "io.nativeblocks.core.type.Then"
+    return when (then) {
+        "$cn.SUCCESS" -> "SUCCESS"
+        "$cn.FAILURE" -> "FAILURE"
+        "$cn.NEXT" -> "NEXT"
+        "$cn.END" -> "END"
+        else -> "END"
+    }
+}
+
 private fun typeMapper(type: String): String {
     return when (type) {
         "kotlin.String" -> "STRING"
@@ -194,7 +211,7 @@ private fun valuePickerMapper(type: String, kind: String): String {
     val cn = if (kind == "BLOCK")
         "io.nativeblocks.core.type.NativeBlockValuePicker"
     else
-        TODO("Handle here for actions")
+        "io.nativeblocks.core.type.NativeActionValuePicker"
 
     return when (type) {
         "$cn.TEXT_INPUT" -> "text-input"

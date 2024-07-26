@@ -46,6 +46,7 @@ internal data class Event(
     val description: String,
     @Transient val functionName: String = "",
     @Transient val dataBinding: List<String> = listOf(),
+    @Transient val then: String = "END"
 )
 
 @Serializable
