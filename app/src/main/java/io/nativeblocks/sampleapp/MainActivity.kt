@@ -32,9 +32,7 @@ class MainActivity : ComponentActivity() {
         )
 
         DemoBlockProvider.provideBlocks()
-        DemoActionProvider.provideActions(
-            xBot
-        )
+        DemoActionProvider.provideActions(xBot)
 
         setContent {
             NativeblocksFrame(
