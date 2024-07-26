@@ -8,11 +8,16 @@ import io.nativeblocks.core.api.NativeblocksError
 import io.nativeblocks.core.api.NativeblocksFrame
 import io.nativeblocks.core.api.NativeblocksLoading
 import io.nativeblocks.core.api.NativeblocksManager
+import io.nativeblocks.sampleapp.integration.consumer.action.DemoActionProvider
+import io.nativeblocks.sampleapp.integration.consumer.block.DemoBlockProvider
 
 private const val NATIVEBLOCKS_API_KEY = ""
 private const val NATIVEBLOCKS_API_URL = "https://us.api.nativeblocks.io/graphql"
 
 class MainActivity : ComponentActivity() {
+
+    // it can provide with DI
+    private val xBot = XBot()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +29,11 @@ class MainActivity : ComponentActivity() {
                 apiKey = NATIVEBLOCKS_API_KEY,
                 developmentMode = true
             )
+        )
+
+        DemoBlockProvider.provideBlocks()
+        DemoActionProvider.provideActions(
+            xBot
         )
 
         setContent {
