@@ -10,12 +10,10 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.toColorInt
 import io.nativeblocks.core.type.BlockIndex
 import io.nativeblocks.core.type.NativeBlock
 import io.nativeblocks.core.type.NativeBlockData
@@ -68,9 +66,7 @@ fun XButton(
     }
     Button(
         shape = RoundedCornerShape(24.dp),
-        colors = ButtonDefaults.buttonColors(
-            backgroundColor = Color("#FF6DE0B4".toColorInt())
-        ),
+        colors = ButtonDefaults.buttonColors(),
         onClick = {
             onClick.invoke()
         }
