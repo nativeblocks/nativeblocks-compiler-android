@@ -1,5 +1,6 @@
 package io.nativeblocks.compiler.action
 
+import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -100,7 +101,8 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                                 resolver = resolver,
                                 symbol = param.getAnnotation(annotation),
                                 param = param,
-                                kind = integrationJson.kind
+                                kind = integrationJson.kind,
+                                filePath = param.containingFile?.filePath.orEmpty()
                             )
                             properties.add(propertyJson)
                         }
@@ -108,7 +110,8 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                         ACTION_DATA_ANNOTATION_SYMBOL -> {
                             val dataItem = generateDataJson(
                                 symbol = param.getAnnotation(annotation),
-                                param = param
+                                param = param,
+                                filePath = param.containingFile?.filePath.orEmpty()
                             )
                             data.add(dataItem)
                         }

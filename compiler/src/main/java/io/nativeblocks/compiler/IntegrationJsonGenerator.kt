@@ -57,12 +57,14 @@ internal fun generatePropertyJson(
     resolver: Resolver,
     symbol: KSAnnotation,
     param: KSValueParameter,
-    kind: String
+    kind: String,
+    filePath: String
 ): Property {
     val description = symbol.getArgument<String>("description")
     val valuePicker = symbol.getArgument<Any>("valuePicker").toString()
     val valuePickerGroup = symbol.getArgument<Any>("valuePickerGroup")
     val valuePickerOptions = symbol.getArgument<ArrayList<*>>("valuePickerOptions")
+    val key = param.name?.asString().orEmpty()
 
     var valuePickerGroupText = ""
     if (valuePickerGroup is KSAnnotation) {
@@ -97,7 +99,7 @@ internal fun generatePropertyJson(
         defaultValue?.code
     }
 
-    val type = typeMapper(param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
+    val type = typeMapper(filePath, key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
     if (type == "STRING") {
         val p: Pattern = Pattern.compile("\"([^\"]*)\"")
         val m: Matcher = p.matcher(default.orEmpty())
@@ -107,11 +109,11 @@ internal fun generatePropertyJson(
     }
 
     val propertyJson = Property(
-        key = param.name?.asString().orEmpty(),
+        key = key,
         value = default.orEmpty(),
         type = type,
         description = description,
-        valuePicker = valuePickerMapper(valuePicker, kind),
+        valuePicker = valuePickerMapper(filePath, key, valuePicker, kind),
         valuePickerGroup = valuePickerGroupText,
         valuePickerOptions = Json.encodeToString(options)
     )
@@ -145,11 +147,12 @@ internal fun generateEventJson(
     return eventJson
 }
 
-internal fun generateDataJson(symbol: KSAnnotation, param: KSValueParameter): Data {
+internal fun generateDataJson(symbol: KSAnnotation, param: KSValueParameter, filePath: String): Data {
     val description = symbol.getArgument<String>("description")
+    val key = param.name?.asString().orEmpty()
     val dataJson = Data(
-        key = param.name?.asString().orEmpty(),
-        type = typeMapper(param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
+        key = key,
+        type = typeMapper(filePath, key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
         description = description,
     )
     return dataJson
@@ -195,7 +198,7 @@ private fun thenMapper(then: String): String {
     }
 }
 
-private fun typeMapper(type: String): String {
+private fun typeMapper(filePath: String, key: String, type: String): String {
     return when (type) {
         "kotlin.String" -> "STRING"
         "kotlin.Int" -> "INT"
@@ -203,11 +206,11 @@ private fun typeMapper(type: String): String {
         "kotlin.Boolean" -> "BOOLEAN"
         "kotlin.Float" -> "FLOAT"
         "kotlin.Double" -> "DOUBLE"
-        else -> throw IllegalArgumentException("Custom type is not supported, please use primitive type")
+        else -> throw IllegalArgumentException("Custom type ($type) is not supported, please use primitive type for ($key) $filePath")
     }
 }
 
-private fun valuePickerMapper(type: String, kind: String): String {
+private fun valuePickerMapper(filePath: String, key: String, type: String, kind: String): String {
     val cn = if (kind == "BLOCK")
         "io.nativeblocks.core.type.NativeBlockValuePicker"
     else
@@ -220,6 +223,6 @@ private fun valuePickerMapper(type: String, kind: String): String {
         "$cn.DROPDOWN" -> "dropdown"
         "$cn.COLOR_PICKER" -> "color-picker"
         "$cn.COMBOBOX_INPUT" -> "combobox-input"
-        else -> throw IllegalArgumentException("Custom picker is not supported, please use supported one")
+        else -> throw IllegalArgumentException("Custom picker is not supported, please use supported one for ($key) $filePath")
     }
 }

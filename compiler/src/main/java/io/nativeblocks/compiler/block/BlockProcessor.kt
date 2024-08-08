@@ -1,5 +1,6 @@
 package io.nativeblocks.compiler.block
 
+import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -93,7 +94,8 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                                 resolver = resolver,
                                 symbol = param.getAnnotation(annotation),
                                 param = param,
-                                kind = integrationJson.kind
+                                kind = integrationJson.kind,
+                                filePath = param.containingFile?.filePath.orEmpty()
                             )
                             properties.add(propertyJson)
                         }
@@ -101,7 +103,8 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                         BLOCK_DATA_ANNOTATION_SYMBOL -> {
                             val dataJson = generateDataJson(
                                 symbol = param.getAnnotation(annotation),
-                                param = param
+                                param = param,
+                                filePath = param.containingFile?.filePath.orEmpty()
                             )
                             data.add(dataJson)
                         }
