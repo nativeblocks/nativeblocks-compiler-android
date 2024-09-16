@@ -5,6 +5,7 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -25,6 +26,9 @@ import java.io.OutputStream
 
 private const val ACTION_ANNOTATION = "io.nativeblocks.core.type.NativeAction"
 private const val PACKAGE_NAME_SUFFIX = ".integration.consumer.action"
+
+private const val ACTION_FUNCTION_ANNOTATION_SYMBOL = "NativeActionFunction"
+private const val ACTION_PARAMETER_ANNOTATION_SYMBOL = "NativeActionParameter"
 
 private const val ACTION_PROP_ANNOTATION_SYMBOL = "NativeActionProp"
 private const val ACTION_DATA_ANNOTATION_SYMBOL = "NativeActionData"
@@ -78,51 +82,69 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
             val data = mutableListOf<Data>()
             val events = mutableListOf<Event>()
 
-            val invokeOperator = klass.getAllFunctions()
-                .filter { it.simpleName.asString() == "invoke" }
-                .filter { it.modifiers.contains(Modifier.OPERATOR) }
-                .firstOrNull()
+            val functions = klass.getAllFunctions().filter { function ->
+                function.annotations.filter {
+                    it.shortName.asString() == ACTION_FUNCTION_ANNOTATION_SYMBOL
+                }.toList().isNotEmpty()
+            }.toList()
 
-            if (invokeOperator == null) {
-                throw IllegalArgumentException("The ${klass.simpleName.asString()} has to use `invoke` function with `operator` keyword")
+            if (functions.size != 1) {
+                throw IllegalArgumentException("Requires only one '@NativeActionFunction' annotated function")
             }
 
-            invokeOperator.parameters.forEach { param ->
-                // check the field has any annotation or not
-                if (param.annotations.firstOrNull() != null) {
-                    // we need to check the field just has one annotation at the same time, if there is more throw an error, else continue the process
-                    val annotations = getNativeblocksAnnotations(param)
-                    if (annotations.size > 1) {
-                        throw IllegalArgumentException("You can not use all annotations at the same time, please use one")
-                    }
-                    when (val annotation = annotations.first().shortName.asString()) {
-                        ACTION_PROP_ANNOTATION_SYMBOL -> {
-                            val propertyJson = generatePropertyJson(
-                                resolver = resolver,
-                                symbol = param.getAnnotation(annotation),
-                                param = param,
-                                kind = integrationJson.kind,
-                                filePath = param.containingFile?.filePath.orEmpty()
-                            )
-                            properties.add(propertyJson)
-                        }
+            val parameters = klass.declarations
+                .filterIsInstance<KSClassDeclaration>()
+                .filter { it.classKind == ClassKind.CLASS }
+                .filter { it.modifiers.contains(Modifier.DATA) }
+                .filter { innerKlass ->
+                    innerKlass.annotations.filter {
+                        it.shortName.asString() == ACTION_PARAMETER_ANNOTATION_SYMBOL
+                    }.toList().isNotEmpty()
+                }.toList()
 
-                        ACTION_DATA_ANNOTATION_SYMBOL -> {
-                            val dataItem = generateDataJson(
-                                symbol = param.getAnnotation(annotation),
-                                param = param,
-                                filePath = param.containingFile?.filePath.orEmpty()
-                            )
-                            data.add(dataItem)
-                        }
+            if (parameters.size != 1) {
+                throw IllegalArgumentException("'@NativeActionFunction' Requires one parameter data class annotated with '@NativeActionParameter'")
+            }
 
-                        ACTION_EVENT_ANNOTATION_SYMBOL -> {
-                            val event = generateEventJson(
-                                symbol = param.getAnnotation(annotation),
-                                param = param,
-                                kind = integrationJson.kind
-                            )
-                            events.add(event)
+            val primaryConstructor = parameters.first().primaryConstructor
+            primaryConstructor?.let { constructor ->
+                constructor.parameters.forEach { param ->
+                    // check the field has any annotation or not
+                    if (param.annotations.firstOrNull() != null) {
+                        // we need to check the field just has one annotation at the same time, if there is more throw an error, else continue the process
+                        val annotations = getNativeblocksAnnotations(param)
+                        if (annotations.size > 1) {
+                            throw IllegalArgumentException("You can not use all annotations at the same time, please use one")
+                        }
+                        when (val annotation = annotations.first().shortName.asString()) {
+                            ACTION_PROP_ANNOTATION_SYMBOL -> {
+                                val propertyJson = generatePropertyJson(
+                                    resolver = resolver,
+                                    symbol = param.getAnnotation(annotation),
+                                    param = param,
+                                    kind = integrationJson.kind,
+                                    filePath = param.containingFile?.filePath.orEmpty()
+                                )
+                                properties.add(propertyJson)
+                            }
+
+                            ACTION_DATA_ANNOTATION_SYMBOL -> {
+                                val dataItem = generateDataJson(
+                                    symbol = param.getAnnotation(annotation),
+                                    param = param,
+                                    filePath = param.containingFile?.filePath.orEmpty()
+                                )
+                                data.add(dataItem)
+                            }
+
+                            ACTION_EVENT_ANNOTATION_SYMBOL -> {
+                                val event = generateEventJson(
+                                    symbol = param.getAnnotation(annotation),
+                                    param = param,
+                                    kind = integrationJson.kind
+                                )
+                                events.add(event)
+                            }
                         }
                     }
                 }
@@ -168,6 +190,8 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                 ActionVisitor(
                     file = file,
                     fileName = fileName,
+                    function = functions.first(),
+                    functionParameter = parameters.first(),
                     packageName = fullPackageName,
                     consumerPackageName = klass.packageName.asString(),
                     klass = klass,

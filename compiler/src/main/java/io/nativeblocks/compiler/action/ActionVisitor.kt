@@ -1,6 +1,7 @@
 package io.nativeblocks.compiler.action
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -19,6 +20,8 @@ import java.io.OutputStream
 internal class ActionVisitor(
     private val file: OutputStream,
     private val fileName: String,
+    private val function: KSFunctionDeclaration,
+    private val functionParameter: KSClassDeclaration,
     private val packageName: String,
     private val consumerPackageName: String,
     private val klass: KSClassDeclaration,
@@ -64,12 +67,11 @@ internal class ActionVisitor(
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
         }
 
-        val invokeFunction = klass.getAllFunctions().find { it.simpleName.asString() == "invoke" }
-
         func.beginControlFlow("actionProps.coroutineScope.launch")
-        func.addCode(klass.simpleName.asString().camelcase() + "." + invokeFunction?.simpleName?.asString())
+        func.addCode(klass.simpleName.asString().camelcase() + "." + function.simpleName.asString())
             .addCode("(")
             .addCode(CodeBlock.builder().indent().build())
+            .addCode(klass.simpleName.asString() + "." + functionParameter.simpleName.asString() + "(")
             .addStatement("")
 
         metaData.map {
@@ -79,7 +81,9 @@ internal class ActionVisitor(
             func.addStatement("${it.key} = ${it.key},")
         }
         metaEvents.forEach {
-            val eventArg = invokeFunction?.parameters?.find { arg -> arg.name?.asString() == it.functionName }
+            val eventArg = functionParameter.primaryConstructor?.parameters?.find { arg ->
+                arg.name?.asString() == it.functionName
+            }
             val eventArgSize = eventArg?.type?.resolve()?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
             items.removeLast()
@@ -103,15 +107,18 @@ internal class ActionVisitor(
                         .addStatement("actionProps.onHandleFailureNextTrigger?.invoke(it)")
                         .endControlFlow()
                 }
+
                 "NEXT" -> {
                     func.beginControlFlow("actionProps.trigger?.let")
                         .addStatement("actionProps.onHandleNextTrigger?.invoke(it)")
                         .endControlFlow()
                 }
+
                 "END" -> {}
             }
             func.addStatement("},")
         }
+        func.addCode(")")
         func.addCode(")")
         func.endControlFlow()
 
