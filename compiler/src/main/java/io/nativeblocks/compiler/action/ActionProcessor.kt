@@ -19,26 +19,24 @@ import io.nativeblocks.compiler.generatePropertyJson
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
 import io.nativeblocks.compiler.meta.Property
+import io.nativeblocks.compiler.type.NativeAction
+import io.nativeblocks.compiler.type.NativeActionData
+import io.nativeblocks.compiler.type.NativeActionEvent
+import io.nativeblocks.compiler.type.NativeActionFunction
+import io.nativeblocks.compiler.type.NativeActionParameter
+import io.nativeblocks.compiler.type.NativeActionProp
 import io.nativeblocks.compiler.util.capitalize
 import io.nativeblocks.compiler.util.getAnnotation
 import io.nativeblocks.compiler.writeJson
 import java.io.OutputStream
 
-private const val ACTION_ANNOTATION = "io.nativeblocks.core.type.NativeAction"
 private const val PACKAGE_NAME_SUFFIX = ".integration.consumer.action"
-
-private const val ACTION_FUNCTION_ANNOTATION_SYMBOL = "NativeActionFunction"
-private const val ACTION_PARAMETER_ANNOTATION_SYMBOL = "NativeActionParameter"
-
-private const val ACTION_PROP_ANNOTATION_SYMBOL = "NativeActionProp"
-private const val ACTION_DATA_ANNOTATION_SYMBOL = "NativeActionData"
-private const val ACTION_EVENT_ANNOTATION_SYMBOL = "NativeActionEvent"
 
 internal class ActionProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver
-            .getSymbolsWithAnnotation(annotationName = ACTION_ANNOTATION)
+            .getSymbolsWithAnnotation(annotationName = NativeAction::class.qualifiedName.orEmpty())
             .filterIsInstance<KSClassDeclaration>()
 
         val basePackageName = environment.options["basePackageName"].orEmpty()
@@ -58,11 +56,11 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
 
         symbols.forEach { klass ->
             // check action duplication (myAction and MyAction are the same from the compiler prospective, we need to normalize it and throw an error)
-            val integrationJson = generateIntegrationJson(
-                symbol = klass.getAnnotation("NativeAction"),
-                kind = "ACTION",
-                integrationKeyTypes = integrationKeyTypes
-            )
+            val integrationJson =
+                klass.getAnnotation(NativeAction::class.simpleName.orEmpty()).generateIntegrationJson(
+                    kind = "ACTION",
+                    integrationKeyTypes = integrationKeyTypes
+                )
             integrations.add(
                 ActionFunctionModel(
                     packageName = klass.packageName.asString(),
@@ -84,7 +82,7 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
 
             val functions = klass.getAllFunctions().filter { function ->
                 function.annotations.filter {
-                    it.shortName.asString() == ACTION_FUNCTION_ANNOTATION_SYMBOL
+                    it.shortName.asString() == NativeActionFunction::class.simpleName
                 }.toList().isNotEmpty()
             }.toList()
 
@@ -98,7 +96,7 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                 .filter { it.modifiers.contains(Modifier.DATA) }
                 .filter { innerKlass ->
                     innerKlass.annotations.filter {
-                        it.shortName.asString() == ACTION_PARAMETER_ANNOTATION_SYMBOL
+                        it.shortName.asString() == NativeActionParameter::class.simpleName
                     }.toList().isNotEmpty()
                 }.toList()
 
@@ -117,10 +115,9 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                             throw IllegalArgumentException("You can not use all annotations at the same time, please use one")
                         }
                         when (val annotation = annotations.first().shortName.asString()) {
-                            ACTION_PROP_ANNOTATION_SYMBOL -> {
-                                val propertyJson = generatePropertyJson(
+                            NativeActionProp::class.simpleName -> {
+                                val propertyJson = param.getAnnotation(annotation).generatePropertyJson(
                                     resolver = resolver,
-                                    symbol = param.getAnnotation(annotation),
                                     param = param,
                                     kind = integrationJson.kind,
                                     filePath = param.containingFile?.filePath.orEmpty()
@@ -128,18 +125,16 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                                 properties.add(propertyJson)
                             }
 
-                            ACTION_DATA_ANNOTATION_SYMBOL -> {
-                                val dataItem = generateDataJson(
-                                    symbol = param.getAnnotation(annotation),
+                            NativeActionData::class.simpleName -> {
+                                val dataItem = param.getAnnotation(annotation).generateDataJson(
                                     param = param,
                                     filePath = param.containingFile?.filePath.orEmpty()
                                 )
                                 data.add(dataItem)
                             }
 
-                            ACTION_EVENT_ANNOTATION_SYMBOL -> {
-                                val event = generateEventJson(
-                                    symbol = param.getAnnotation(annotation),
+                            NativeActionEvent::class.simpleName -> {
+                                val event = param.getAnnotation(annotation).generateEventJson(
                                     param = param,
                                     kind = integrationJson.kind
                                 )
@@ -217,9 +212,9 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
 
     private fun getNativeblocksAnnotations(param: KSValueParameter): List<KSAnnotation> {
         val nativeblocksAnnotations = param.annotations.filter {
-            it.shortName.asString() == ACTION_DATA_ANNOTATION_SYMBOL ||
-                    it.shortName.asString() == ACTION_EVENT_ANNOTATION_SYMBOL ||
-                    it.shortName.asString() == ACTION_PROP_ANNOTATION_SYMBOL
+            it.shortName.asString() == NativeActionData::class.simpleName ||
+                    it.shortName.asString() == NativeActionEvent::class.simpleName ||
+                    it.shortName.asString() == NativeActionProp::class.simpleName
         }
         return nativeblocksAnnotations.toList()
     }

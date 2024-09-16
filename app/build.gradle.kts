@@ -59,5 +59,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling:1.6.8")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.nativeblocks:nativeblocks-android:1.1.0")
+    implementation(project(":compiler"))
     ksp(project(":compiler"))
 }
