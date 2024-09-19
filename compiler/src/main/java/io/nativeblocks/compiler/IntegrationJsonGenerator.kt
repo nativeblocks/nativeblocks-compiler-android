@@ -14,6 +14,8 @@ import io.nativeblocks.compiler.meta.ValuePickerOption
 import io.nativeblocks.compiler.type.NativeActionValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.Then
+import io.nativeblocks.compiler.util.Diagnostic
+import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.getArgument
 import io.nativeblocks.compiler.util.getDefaultValue
 import io.nativeblocks.compiler.util.onlyLettersAndUnderscore
@@ -32,12 +34,12 @@ internal fun KSAnnotation.generateIntegrationJson(
     val description = getArgument<String>("description")
 
     if (keyType.onlyLettersAndUnderscore().not()) {
-        throw IllegalArgumentException("Integration keyType must contain only letter or underscore")
+        throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention)
     }
 
     val check = integrationKeyTypes.find { it.uppercase() == keyType.uppercase() }
     if (check.isNullOrEmpty().not()) {
-        throw IllegalArgumentException("The $keyType has been used before, please use an unique keyType for each integration")
+        throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeUniqueness(keyType))
     }
 
     // now we have all things to create integration json
@@ -82,8 +84,7 @@ internal fun KSAnnotation.generatePropertyJson(
             val texts = mutableListOf<String>()
             klass.arguments.forEach { argument ->
                 val id = if (argument.name?.asString() == "id") argument.value.toString() else ""
-                val text =
-                    if (argument.name?.asString() == "text") argument.value.toString() else ""
+                val text = if (argument.name?.asString() == "text") argument.value.toString() else ""
                 if (id.isNotEmpty()) ids.add(id)
                 if (text.isNotEmpty()) texts.add(text)
             }
@@ -100,7 +101,7 @@ internal fun KSAnnotation.generatePropertyJson(
         defaultValue?.code
     }
 
-    val type = typeMapper(filePath, key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
+    val type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
     if (type == "STRING") {
         val p: Pattern = Pattern.compile("\"([^\"]*)\"")
         val m: Matcher = p.matcher(default.orEmpty())
@@ -152,7 +153,7 @@ internal fun KSAnnotation.generateDataJson(param: KSValueParameter, filePath: St
     val key = param.name?.asString().orEmpty()
     val dataJson = Data(
         key = key,
-        type = typeMapper(filePath, key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
+        type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
         description = description,
     )
     return dataJson
@@ -194,7 +195,7 @@ private fun thenMapper(then: String): String {
     }
 }
 
-private fun typeMapper(filePath: String, key: String, type: String): String {
+private fun typeMapper(key: String, type: String): String {
     return when (type) {
         "kotlin.String" -> "STRING"
         "kotlin.Int" -> "INT"
@@ -202,7 +203,7 @@ private fun typeMapper(filePath: String, key: String, type: String): String {
         "kotlin.Boolean" -> "BOOLEAN"
         "kotlin.Float" -> "FLOAT"
         "kotlin.Double" -> "DOUBLE"
-        else -> throw IllegalArgumentException("Custom type ($type) is not supported, please use primitive type for ($key) $filePath")
+        else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(key, type))
     }
 }
 
@@ -219,6 +220,6 @@ private fun valuePickerMapper(filePath: String, key: String, type: String, kind:
         "$cn.DROPDOWN" -> "dropdown"
         "$cn.COLOR_PICKER" -> "color-picker"
         "$cn.COMBOBOX_INPUT" -> "combobox-input"
-        else -> throw IllegalArgumentException("Custom picker is not supported, please use supported one for ($key) $filePath")
+        else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomPicker(filePath, key))
     }
 }

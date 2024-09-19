@@ -25,6 +25,8 @@ import io.nativeblocks.compiler.type.NativeActionEvent
 import io.nativeblocks.compiler.type.NativeActionFunction
 import io.nativeblocks.compiler.type.NativeActionParameter
 import io.nativeblocks.compiler.type.NativeActionProp
+import io.nativeblocks.compiler.util.Diagnostic
+import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.capitalize
 import io.nativeblocks.compiler.util.getAnnotation
 import io.nativeblocks.compiler.writeJson
@@ -43,10 +45,10 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
         val moduleName = environment.options["moduleName"].orEmpty()
 
         if (basePackageName.isEmpty() || moduleName.isEmpty()) {
-            throw IllegalArgumentException("Please provide basePackageName and moduleName through the ksp compiler option, https://kotlinlang.org/docs/ksp-quickstart.html#pass-options-to-processors")
+            throw Diagnostic.exceptionDispatcher(DiagnosticType.KspArgNotFound)
         }
 
-        val fullPackageName = (basePackageName + PACKAGE_NAME_SUFFIX)
+        val fullPackageName = basePackageName + PACKAGE_NAME_SUFFIX
 
         if (!symbols.iterator().hasNext()) return emptyList()
         val sources = resolver.getAllFiles().toList().toTypedArray()
@@ -87,7 +89,7 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
             }.toList()
 
             if (functions.size != 1) {
-                throw IllegalArgumentException("Requires only one '@NativeActionFunction' annotated function")
+                throw Diagnostic.exceptionDispatcher(DiagnosticType.RequireFunctionAnnotation)
             }
 
             val parameters = klass.declarations
@@ -101,7 +103,7 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                 }.toList()
 
             if (parameters.size != 1) {
-                throw IllegalArgumentException("'@NativeActionFunction' Requires one parameter data class annotated with '@NativeActionParameter'")
+                throw Diagnostic.exceptionDispatcher(DiagnosticType.RequireFunctionParameterAnnotation)
             }
 
             val primaryConstructor = parameters.first().primaryConstructor
@@ -112,7 +114,7 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                         // we need to check the field just has one annotation at the same time, if there is more throw an error, else continue the process
                         val annotations = getNativeblocksAnnotations(param)
                         if (annotations.size > 1) {
-                            throw IllegalArgumentException("You can not use all annotations at the same time, please use one")
+                            throw Diagnostic.exceptionDispatcher(DiagnosticType.ConflictAnnotation)
                         }
                         when (val annotation = annotations.first().shortName.asString()) {
                             NativeActionProp::class.simpleName -> {
@@ -147,13 +149,13 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
 
             val eventSize = events.groupingBy { it.then }.eachCount().filter { it.value > 1 }
             if (eventSize.isNotEmpty()) {
-                throw IllegalArgumentException("NativeActionEvent supports only NEXT, FAILURE, SUCCESS, and END events, and each must be used exactly once without repetition")
+                throw Diagnostic.exceptionDispatcher(DiagnosticType.ThenUniqueness)
             }
             val eventSet = events.map { it.then }.toSet()
             if ((eventSet.contains("NEXT") || eventSet.contains("END")) &&
                 (eventSet.contains("SUCCESS") || eventSet.contains("FAILURE"))
             ) {
-                throw IllegalArgumentException("NativeActionEvent containing NEXT or END cannot also contain SUCCESS or FAILURE")
+                throw Diagnostic.exceptionDispatcher(DiagnosticType.ThenConflict)
             }
 
             writeJson(

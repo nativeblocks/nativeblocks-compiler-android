@@ -12,6 +12,8 @@ import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
+import io.nativeblocks.compiler.util.Diagnostic
+import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.plusAssign
 import java.io.OutputStream
 
@@ -85,14 +87,14 @@ internal class BlockVisitor(
             val type = slotArg?.type?.resolve()
 
             if (type?.isFunctionType == false) {
-                throw IllegalArgumentException("Slot should be a composable function")
+                throw Diagnostic.exceptionDispatcher(DiagnosticType.SlotMustBeComposable)
             }
 
             val blockIndexes = type?.arguments?.filter { ksArg ->
                 ksArg.type?.resolve()?.declaration?.simpleName?.asString() == "BlockIndex"
             }
             if (blockIndexes.isNullOrEmpty()) {
-                throw IllegalArgumentException("Slot function has to use BlockIndex type, Please make sure the function defined like: @Composable (index: BlockIndex) -> Unit")
+                throw Diagnostic.exceptionDispatcher(DiagnosticType.SlotComposableIndex)
             }
             func.addStatement("${it.slot} = @Composable { index -> ")
             func.beginControlFlow("if (${it.slot} != null)")
@@ -139,7 +141,7 @@ internal class BlockVisitor(
             "FLOAT" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
             "DOUBLE" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
             "BOOLEAN" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw IllegalArgumentException("Custom type is not supported, please use primitive type")
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
         }
     }
 
@@ -151,7 +153,7 @@ internal class BlockVisitor(
             "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
             "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
             "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
-            else -> throw IllegalArgumentException("Custom type is not supported, please use primitive type")
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
 }

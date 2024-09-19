@@ -13,6 +13,8 @@ import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
 import io.nativeblocks.compiler.meta.Property
+import io.nativeblocks.compiler.util.Diagnostic
+import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.camelcase
 import io.nativeblocks.compiler.util.plusAssign
 import java.io.OutputStream
@@ -35,14 +37,10 @@ internal class ActionVisitor(
         val importActionProps = ClassName("io.nativeblocks.core.api.provider.action", "ActionProps")
         val importNativeBlockModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeBlockModel")
         val importNativeActionModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionModel")
-        val importNativeActionTriggerModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
-        val importNativeActionTriggerThen =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
-        val importNativeActionTriggerPropertyModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
-        val importNativeActionTriggerDataModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
+        val importNativeActionTriggerModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
+        val importNativeActionTriggerThen = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
+        val importNativeActionTriggerPropertyModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
+        val importNativeActionTriggerDataModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
 
@@ -160,7 +158,7 @@ internal class ActionVisitor(
             "FLOAT" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
             "DOUBLE" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
             "BOOLEAN" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw IllegalArgumentException("Custom type is not supported, please use primitive type")
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
         }
     }
 
@@ -172,7 +170,7 @@ internal class ActionVisitor(
             "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
             "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
             "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
-            else -> throw IllegalArgumentException("Custom type is not supported, please use primitive type")
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
 

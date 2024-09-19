@@ -24,6 +24,8 @@ import io.nativeblocks.compiler.type.NativeBlockData
 import io.nativeblocks.compiler.type.NativeBlockEvent
 import io.nativeblocks.compiler.type.NativeBlockProp
 import io.nativeblocks.compiler.type.NativeBlockSlot
+import io.nativeblocks.compiler.util.Diagnostic
+import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.capitalize
 import io.nativeblocks.compiler.util.getAnnotation
 import io.nativeblocks.compiler.writeJson
@@ -42,10 +44,10 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
         val moduleName = environment.options["moduleName"].orEmpty()
 
         if (basePackageName.isEmpty() || moduleName.isEmpty()) {
-            throw IllegalArgumentException("Please provide basePackageName and moduleName through the ksp compiler option, https://kotlinlang.org/docs/ksp-quickstart.html#pass-options-to-processors")
+            throw Diagnostic.exceptionDispatcher(DiagnosticType.KspArgNotFound)
         }
 
-        val fullPackageName = (basePackageName + PACKAGE_NAME_SUFFIX)
+        val fullPackageName = basePackageName + PACKAGE_NAME_SUFFIX
 
         if (!symbols.iterator().hasNext()) return emptyList()
         val sources = resolver.getAllFiles().toList().toTypedArray()
@@ -85,7 +87,7 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                     // we need to check the field just has one annotation at the same time, if there is more throw an error, else continue the process
                     val annotations = getNativeblocksAnnotations(param)
                     if (annotations.size > 1) {
-                        throw IllegalArgumentException("You can not use all annotations at the same time, please use one")
+                        throw Diagnostic.exceptionDispatcher(DiagnosticType.ConflictAnnotation)
                     }
                     when (val annotation = annotations.first().shortName.asString()) {
                         NativeBlockProp::class.simpleName -> {
