@@ -96,11 +96,21 @@ internal class BlockVisitor(
             if (blockIndexes.isNullOrEmpty()) {
                 throw Diagnostic.exceptionDispatcher(DiagnosticType.SlotComposableIndex)
             }
-            func.addStatement("${it.slot} = @Composable { index -> ")
-            func.beginControlFlow("if (${it.slot} != null)")
-            func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
-            func.endControlFlow()
-            func.addStatement("},")
+            if (type.isMarkedNullable) {
+                func.beginControlFlow("${it.slot} = if (${it.slot} != null)")
+                func.addStatement("@Composable { index -> ")
+                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
+                func.endControlFlow()
+                func.addStatement("} else {")
+                func.addStatement("null")
+                func.addStatement("},")
+            } else {
+                func.addStatement("${it.slot} = @Composable { index -> ")
+                func.beginControlFlow("if (${it.slot} != null)")
+                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
+                func.endControlFlow()
+                func.addStatement("},")
+            }
         }
         metaEvents.forEach {
             val eventArg = function.parameters.find { arg -> arg.name?.asString() == it.event }
