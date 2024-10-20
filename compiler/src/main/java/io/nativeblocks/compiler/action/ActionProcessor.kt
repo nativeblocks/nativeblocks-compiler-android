@@ -130,7 +130,6 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                             NativeActionData::class.simpleName -> {
                                 val dataItem = param.getAnnotation(annotation).generateDataJson(
                                     param = param,
-                                    filePath = param.containingFile?.filePath.orEmpty()
                                 )
                                 data.add(dataItem)
                             }
