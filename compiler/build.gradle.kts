@@ -42,10 +42,10 @@ mavenPublishing {
             }
         }
         scm {
-            connection = "scm:git:github.com/nativeblocks/nativeblocks-android.git"
+            connection = "scm:git:github.com/nativeblocks/nativeblocks-compiler-android.git"
             developerConnection =
-                "scm:git:ssh://github.com/nativeblocks/nativeblocks-android.git"
-            url = "https://github.com/nativeblocks/nativeblocks-android"
+                "scm:git:ssh://github.com/nativeblocks/nativeblocks-compiler-android.git"
+            url = "https://github.com/nativeblocks/nativeblocks-compiler-android"
         }
     }
 }
@@ -59,7 +59,7 @@ dependencies {
 object ModuleInfo {
     const val GROUP_ID = "io.nativeblocks"
     const val ARTIFACT_ID = "nativeblocks-compiler-android"
-    const val VERSION = "1.0.2"
+    const val VERSION = "1.0.3"
     const val DESCRIPTION = "Nativeblocks compiler SDK for Android"
     const val URL = "https://nativeblocks.io"
 }
