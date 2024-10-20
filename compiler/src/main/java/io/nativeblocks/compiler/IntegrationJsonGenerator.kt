@@ -11,6 +11,11 @@ import io.nativeblocks.compiler.meta.Integration
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
 import io.nativeblocks.compiler.meta.ValuePickerOption
+import io.nativeblocks.compiler.type.NativeActionValuePicker
+import io.nativeblocks.compiler.type.NativeBlockValuePicker
+import io.nativeblocks.compiler.type.Then
+import io.nativeblocks.compiler.util.Diagnostic
+import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.getArgument
 import io.nativeblocks.compiler.util.getDefaultValue
 import io.nativeblocks.compiler.util.onlyLettersAndUnderscore
@@ -20,22 +25,21 @@ import kotlinx.serialization.json.Json
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-internal fun generateIntegrationJson(
-    symbol: KSAnnotation,
+internal fun KSAnnotation.generateIntegrationJson(
     kind: String,
     integrationKeyTypes: MutableList<String>
 ): Integration {
-    val keyType = symbol.getArgument<String>("keyType")
-    val name = symbol.getArgument<String>("name")
-    val description = symbol.getArgument<String>("description")
+    val keyType = getArgument<String>("keyType")
+    val name = getArgument<String>("name")
+    val description = getArgument<String>("description")
 
     if (keyType.onlyLettersAndUnderscore().not()) {
-        throw IllegalArgumentException("Integration keyType must contain only letter or underscore")
+        throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention)
     }
 
     val check = integrationKeyTypes.find { it.uppercase() == keyType.uppercase() }
     if (check.isNullOrEmpty().not()) {
-        throw IllegalArgumentException("The $keyType has been used before, please use an unique keyType for each integration")
+        throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeUniqueness(keyType))
     }
 
     // now we have all things to create integration json
@@ -53,17 +57,16 @@ internal fun generateIntegrationJson(
     return integrationJson
 }
 
-internal fun generatePropertyJson(
+internal fun KSAnnotation.generatePropertyJson(
     resolver: Resolver,
-    symbol: KSAnnotation,
     param: KSValueParameter,
     kind: String,
     filePath: String
 ): Property {
-    val description = symbol.getArgument<String>("description")
-    val valuePicker = symbol.getArgument<Any>("valuePicker").toString()
-    val valuePickerGroup = symbol.getArgument<Any>("valuePickerGroup")
-    val valuePickerOptions = symbol.getArgument<ArrayList<*>>("valuePickerOptions")
+    val description = getArgument<String>("description")
+    val valuePicker = getArgument<Any>("valuePicker").toString()
+    val valuePickerGroup = getArgument<Any>("valuePickerGroup")
+    val valuePickerOptions = getArgument<ArrayList<*>>("valuePickerOptions")
     val key = param.name?.asString().orEmpty()
 
     var valuePickerGroupText = ""
@@ -81,8 +84,7 @@ internal fun generatePropertyJson(
             val texts = mutableListOf<String>()
             klass.arguments.forEach { argument ->
                 val id = if (argument.name?.asString() == "id") argument.value.toString() else ""
-                val text =
-                    if (argument.name?.asString() == "text") argument.value.toString() else ""
+                val text = if (argument.name?.asString() == "text") argument.value.toString() else ""
                 if (id.isNotEmpty()) ids.add(id)
                 if (text.isNotEmpty()) texts.add(text)
             }
@@ -99,7 +101,7 @@ internal fun generatePropertyJson(
         defaultValue?.code
     }
 
-    val type = typeMapper(filePath, key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
+    val type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
     if (type == "STRING") {
         val p: Pattern = Pattern.compile("\"([^\"]*)\"")
         val m: Matcher = p.matcher(default.orEmpty())
@@ -120,17 +122,16 @@ internal fun generatePropertyJson(
     return propertyJson
 }
 
-internal fun generateEventJson(
-    symbol: KSAnnotation,
+internal fun KSAnnotation.generateEventJson(
     param: KSValueParameter,
     kind: String
 ): Event {
-    val description = symbol.getArgument<String>("description")
-    val dataBinding = symbol.getArgument<ArrayList<String>>("dataBinding")
+    val description = getArgument<String>("description")
+    val dataBinding = getArgument<ArrayList<String>>("dataBinding")
     val then = if (kind == "BLOCK") {
-        "io.nativeblocks.core.type.Then.End"
+        Then::class.qualifiedName.orEmpty()
     } else {
-        symbol.getArgument<Any>("then").toString()
+        getArgument<Any>("then").toString()
     }
     val name = if (kind == "BLOCK") {
         param.name?.asString().orEmpty()
@@ -147,23 +148,19 @@ internal fun generateEventJson(
     return eventJson
 }
 
-internal fun generateDataJson(symbol: KSAnnotation, param: KSValueParameter, filePath: String): Data {
-    val description = symbol.getArgument<String>("description")
+internal fun KSAnnotation.generateDataJson(param: KSValueParameter, filePath: String): Data {
+    val description = getArgument<String>("description")
     val key = param.name?.asString().orEmpty()
     val dataJson = Data(
         key = key,
-        type = typeMapper(filePath, key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
+        type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
         description = description,
     )
     return dataJson
 }
 
-internal fun generateSlotJson(
-    symbol: KSAnnotation,
-    param: KSValueParameter,
-): Slot {
-    val description = symbol.getArgument<String>("description")
-
+internal fun KSAnnotation.generateSlotJson(param: KSValueParameter): Slot {
+    val description = getArgument<String>("description")
     val slotJson = Slot(
         slot = param.name?.asString().orEmpty(),
         description = description,
@@ -184,11 +181,11 @@ internal inline fun <reified T> writeJson(
         extensionName = "json"
     )
     file += (Json.encodeToString(json))
-    file.flush()
+    file.close()
 }
 
 private fun thenMapper(then: String): String {
-    val cn = "io.nativeblocks.core.type.Then"
+    val cn = Then::class.qualifiedName.orEmpty()
     return when (then) {
         "$cn.SUCCESS" -> "SUCCESS"
         "$cn.FAILURE" -> "FAILURE"
@@ -198,7 +195,7 @@ private fun thenMapper(then: String): String {
     }
 }
 
-private fun typeMapper(filePath: String, key: String, type: String): String {
+private fun typeMapper(key: String, type: String): String {
     return when (type) {
         "kotlin.String" -> "STRING"
         "kotlin.Int" -> "INT"
@@ -206,15 +203,15 @@ private fun typeMapper(filePath: String, key: String, type: String): String {
         "kotlin.Boolean" -> "BOOLEAN"
         "kotlin.Float" -> "FLOAT"
         "kotlin.Double" -> "DOUBLE"
-        else -> throw IllegalArgumentException("Custom type ($type) is not supported, please use primitive type for ($key) $filePath")
+        else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(key, type))
     }
 }
 
 private fun valuePickerMapper(filePath: String, key: String, type: String, kind: String): String {
     val cn = if (kind == "BLOCK")
-        "io.nativeblocks.core.type.NativeBlockValuePicker"
+        NativeBlockValuePicker::class.qualifiedName.orEmpty()
     else
-        "io.nativeblocks.core.type.NativeActionValuePicker"
+        NativeActionValuePicker::class.qualifiedName.orEmpty()
 
     return when (type) {
         "$cn.TEXT_INPUT" -> "text-input"
@@ -223,6 +220,6 @@ private fun valuePickerMapper(filePath: String, key: String, type: String, kind:
         "$cn.DROPDOWN" -> "dropdown"
         "$cn.COLOR_PICKER" -> "color-picker"
         "$cn.COMBOBOX_INPUT" -> "combobox-input"
-        else -> throw IllegalArgumentException("Custom picker is not supported, please use supported one for ($key) $filePath")
+        else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomPicker(filePath, key))
     }
 }

@@ -11,6 +11,7 @@ Before starting we need to add necessary dependencies
 
 ```groovy
 implementation("io.nativeblocks:nativeblocks-android:[latest-version]")
+implementation("io.nativeblocks:nativeblocks-compiler-android:[latest-version]")
 ksp("io.nativeblocks:nativeblocks-compiler-android:[latest-version]")
 ```
 

@@ -1,6 +1,7 @@
 package io.nativeblocks.compiler.action
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
@@ -12,6 +13,8 @@ import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
 import io.nativeblocks.compiler.meta.Property
+import io.nativeblocks.compiler.util.Diagnostic
+import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.camelcase
 import io.nativeblocks.compiler.util.plusAssign
 import java.io.OutputStream
@@ -19,6 +22,8 @@ import java.io.OutputStream
 internal class ActionVisitor(
     private val file: OutputStream,
     private val fileName: String,
+    private val function: KSFunctionDeclaration,
+    private val functionParameter: KSClassDeclaration,
     private val packageName: String,
     private val consumerPackageName: String,
     private val klass: KSClassDeclaration,
@@ -32,14 +37,10 @@ internal class ActionVisitor(
         val importActionProps = ClassName("io.nativeblocks.core.api.provider.action", "ActionProps")
         val importNativeBlockModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeBlockModel")
         val importNativeActionModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionModel")
-        val importNativeActionTriggerModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
-        val importNativeActionTriggerThen =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
-        val importNativeActionTriggerPropertyModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
-        val importNativeActionTriggerDataModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
+        val importNativeActionTriggerModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
+        val importNativeActionTriggerThen = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
+        val importNativeActionTriggerPropertyModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
+        val importNativeActionTriggerDataModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
 
@@ -64,12 +65,11 @@ internal class ActionVisitor(
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
         }
 
-        val invokeFunction = klass.getAllFunctions().find { it.simpleName.asString() == "invoke" }
-
         func.beginControlFlow("actionProps.coroutineScope.launch")
-        func.addCode(klass.simpleName.asString().camelcase() + "." + invokeFunction?.simpleName?.asString())
+        func.addCode(klass.simpleName.asString().camelcase() + "." + function.simpleName.asString())
             .addCode("(")
             .addCode(CodeBlock.builder().indent().build())
+            .addCode(klass.simpleName.asString() + "." + functionParameter.simpleName.asString() + "(")
             .addStatement("")
 
         metaData.map {
@@ -79,7 +79,9 @@ internal class ActionVisitor(
             func.addStatement("${it.key} = ${it.key},")
         }
         metaEvents.forEach {
-            val eventArg = invokeFunction?.parameters?.find { arg -> arg.name?.asString() == it.functionName }
+            val eventArg = functionParameter.primaryConstructor?.parameters?.find { arg ->
+                arg.name?.asString() == it.functionName
+            }
             val eventArgSize = eventArg?.type?.resolve()?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
             items.removeLast()
@@ -103,15 +105,18 @@ internal class ActionVisitor(
                         .addStatement("actionProps.onHandleFailureNextTrigger?.invoke(it)")
                         .endControlFlow()
                 }
+
                 "NEXT" -> {
                     func.beginControlFlow("actionProps.trigger?.let")
                         .addStatement("actionProps.onHandleNextTrigger?.invoke(it)")
                         .endControlFlow()
                 }
+
                 "END" -> {}
             }
             func.addStatement("},")
         }
+        func.addCode(")")
         func.addCode(")")
         func.endControlFlow()
 
@@ -153,7 +158,7 @@ internal class ActionVisitor(
             "FLOAT" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
             "DOUBLE" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
             "BOOLEAN" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw IllegalArgumentException("Custom type is not supported, please use primitive type")
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
         }
     }
 
@@ -165,7 +170,7 @@ internal class ActionVisitor(
             "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
             "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
             "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
-            else -> throw IllegalArgumentException("Custom type is not supported, please use primitive type")
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
 

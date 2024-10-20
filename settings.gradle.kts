@@ -16,6 +16,6 @@ dependencyResolutionManagement {
         maven("https://jitpack.io")
     }
 }
-rootProject.name = "compiler-android"
+rootProject.name = "nativeblocks-compiler-android"
 include(":app")
 include(":compiler")

@@ -1,10 +1,12 @@
 package io.nativeblocks.sampleapp
 
-import io.nativeblocks.core.type.NativeAction
-import io.nativeblocks.core.type.NativeActionData
-import io.nativeblocks.core.type.NativeActionEvent
-import io.nativeblocks.core.type.NativeActionProp
-import io.nativeblocks.core.type.Then
+import io.nativeblocks.compiler.type.NativeAction
+import io.nativeblocks.compiler.type.NativeActionData
+import io.nativeblocks.compiler.type.NativeActionEvent
+import io.nativeblocks.compiler.type.NativeActionFunction
+import io.nativeblocks.compiler.type.NativeActionParameter
+import io.nativeblocks.compiler.type.NativeActionProp
+import io.nativeblocks.compiler.type.Then
 
 @NativeAction(
     keyType = "XBOT",
@@ -13,21 +15,32 @@ import io.nativeblocks.core.type.Then
 )
 class XBot {
 
-    suspend operator fun invoke(
-        @NativeActionProp apiKey: String,
-        @NativeActionProp aiModelId: String,
-        @NativeActionData userPrompt: String,
-        @NativeActionData result: String,
-        @NativeActionData errorMessage: String,
+    @NativeActionParameter
+    data class Parameters(
+        @NativeActionProp
+        val apiKey: String,
+        @NativeActionProp
+        val aiModelId: String,
+        @NativeActionData
+        val userPrompt: String,
+        @NativeActionData
+        val result: String,
+        @NativeActionData
+        val errorMessage: String,
         @NativeActionEvent(
             then = Then.SUCCESS,
             dataBinding = ["result"]
-        ) onMessageStream: (String) -> Unit,
+        )
+        val onMessageStream: (String) -> Unit,
         @NativeActionEvent(
             then = Then.FAILURE,
             dataBinding = ["errorMessage"]
-        ) onError: (String) -> Unit
-    ) {
+        )
+        val onError: (String) -> Unit
+    )
+
+    @NativeActionFunction
+    suspend fun ask(parameters: Parameters) {
 
     }
 }

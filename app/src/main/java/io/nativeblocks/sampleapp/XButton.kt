@@ -14,14 +14,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import io.nativeblocks.core.type.BlockIndex
-import io.nativeblocks.core.type.NativeBlock
-import io.nativeblocks.core.type.NativeBlockData
-import io.nativeblocks.core.type.NativeBlockEvent
-import io.nativeblocks.core.type.NativeBlockProp
-import io.nativeblocks.core.type.NativeBlockSlot
-import io.nativeblocks.core.type.NativeBlockValuePicker
-import io.nativeblocks.core.type.NativeBlockValuePickerOption
+import io.nativeblocks.compiler.type.BlockIndex
+import io.nativeblocks.compiler.type.NativeBlock
+import io.nativeblocks.compiler.type.NativeBlockData
+import io.nativeblocks.compiler.type.NativeBlockEvent
+import io.nativeblocks.compiler.type.NativeBlockProp
+import io.nativeblocks.compiler.type.NativeBlockSlot
+import io.nativeblocks.compiler.type.NativeBlockValuePicker
+import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
 
 @NativeBlock(
     name = "X button",
