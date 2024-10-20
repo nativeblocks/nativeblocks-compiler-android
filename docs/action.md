@@ -110,6 +110,7 @@ class XBot {
         val onError: (String) -> Unit
     )
 
+    @NativeActionFunction
     suspend fun ask(parameters: Parameters) {
         // ... Action implementation ...
     }
