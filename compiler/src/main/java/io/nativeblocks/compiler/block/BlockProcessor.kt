@@ -103,7 +103,6 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                         NativeBlockData::class.simpleName -> {
                             val dataJson = param.getAnnotation(annotation).generateDataJson(
                                 param = param,
-                                filePath = param.containingFile?.filePath.orEmpty()
                             )
                             data.add(dataJson)
                         }

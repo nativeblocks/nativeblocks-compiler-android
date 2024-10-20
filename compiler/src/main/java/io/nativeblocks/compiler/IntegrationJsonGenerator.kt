@@ -148,7 +148,7 @@ internal fun KSAnnotation.generateEventJson(
     return eventJson
 }
 
-internal fun KSAnnotation.generateDataJson(param: KSValueParameter, filePath: String): Data {
+internal fun KSAnnotation.generateDataJson(param: KSValueParameter): Data {
     val description = getArgument<String>("description")
     val key = param.name?.asString().orEmpty()
     val dataJson = Data(
