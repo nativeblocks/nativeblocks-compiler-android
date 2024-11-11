@@ -7,6 +7,9 @@ annotation class NativeBlock(
     val keyType: String,
     val name: String,
     val description: String,
+    val version: Int = 1,
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
 )
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
@@ -16,21 +19,31 @@ annotation class NativeBlockProp(
     val valuePickerGroup: NativeBlockValuePickerPosition = NativeBlockValuePickerPosition(
         text = "General"
     ),
-    val valuePickerOptions: Array<NativeBlockValuePickerOption> = []
+    val valuePickerOptions: Array<NativeBlockValuePickerOption> = [],
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
 )
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class NativeBlockData(val description: String = "")
+annotation class NativeBlockData(
+    val description: String = "",
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
+)
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockEvent(
     val description: String = "",
-    val dataBinding: Array<String> = []
+    val dataBinding: Array<String> = [],
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
 )
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockSlot(
-    val description: String = ""
+    val description: String = "",
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
 )
 
 annotation class NativeBlockValuePickerOption(
