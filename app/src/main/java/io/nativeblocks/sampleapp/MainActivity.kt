@@ -37,6 +37,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             NativeblocksFrame(
                 frameRoute = "/",
+                routeArguments = hashMapOf(),
                 loading = {
                     NativeblocksLoading()
                 },

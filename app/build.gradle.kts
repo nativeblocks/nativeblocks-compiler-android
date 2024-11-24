@@ -58,7 +58,7 @@ dependencies {
     implementation("androidx.compose.animation:animation:1.7.4")
     implementation("androidx.compose.ui:ui-tooling:1.7.4")
     implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("io.nativeblocks:nativeblocks-android:1.1.0")
+    implementation("io.nativeblocks:nativeblocks-android:1.2.1")
     implementation(project(":compiler"))
     ksp(project(":compiler"))
 }
