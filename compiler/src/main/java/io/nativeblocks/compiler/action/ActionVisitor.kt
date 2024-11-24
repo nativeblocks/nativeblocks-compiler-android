@@ -152,7 +152,7 @@ internal class ActionVisitor(
 
     private fun propTypeMapper(prop: Property): Any {
         return when (prop.type) {
-            "STRING" -> """properties["${prop.key}"]?.value ?: ${prop.value.ifEmpty { "\"\"" }}"""
+            "STRING" -> """properties["${prop.key}"]?.value ?: "${prop.value}""""
             "INT" -> """properties["${prop.key}"]?.value?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
             "LONG" -> """properties["${prop.key}"]?.value?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
             "FLOAT" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
@@ -164,7 +164,7 @@ internal class ActionVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value ?: ${"\"\""}"""
+            "STRING" -> """${dataItem.key}?.value ?: """""
             "INT" -> """${dataItem.key}?.value?.toIntOrNull() ?: ${0}"""
             "LONG" -> """${dataItem.key}?.value?.toLongOrNull() ?: ${0L}"""
             "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
