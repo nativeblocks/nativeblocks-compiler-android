@@ -32,6 +32,9 @@ internal fun KSAnnotation.generateIntegrationJson(
     val keyType = getArgument<String>("keyType")
     val name = getArgument<String>("name")
     val description = getArgument<String>("description")
+    val version = getArgument<Int>("version")
+    val deprecated = getArgument<Boolean>("deprecated")
+    val deprecatedReason = getArgument<String>("deprecatedReason")
 
     if (keyType.onlyLettersAndUnderscore().not()) {
         throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention)
@@ -46,6 +49,9 @@ internal fun KSAnnotation.generateIntegrationJson(
     val integrationJson = Integration(
         name = name,
         description = description,
+        version = version,
+        deprecated = deprecated,
+        deprecatedReason = deprecatedReason,
         documentation = "",
         imageIcon = "",
         keyType = keyType,
@@ -64,6 +70,8 @@ internal fun KSAnnotation.generatePropertyJson(
     filePath: String
 ): Property {
     val description = getArgument<String>("description")
+    val deprecated = getArgument<Boolean>("deprecated")
+    val deprecatedReason = getArgument<String>("deprecatedReason")
     val valuePicker = getArgument<Any>("valuePicker").toString()
     val valuePickerGroup = getArgument<Any>("valuePickerGroup")
     val valuePickerOptions = getArgument<ArrayList<*>>("valuePickerOptions")
@@ -115,6 +123,8 @@ internal fun KSAnnotation.generatePropertyJson(
         value = default.orEmpty(),
         type = type,
         description = description,
+        deprecated = deprecated,
+        deprecatedReason = deprecatedReason,
         valuePicker = valuePickerMapper(filePath, key, valuePicker, kind),
         valuePickerGroup = valuePickerGroupText,
         valuePickerOptions = Json.encodeToString(options)
@@ -127,6 +137,8 @@ internal fun KSAnnotation.generateEventJson(
     kind: String
 ): Event {
     val description = getArgument<String>("description")
+    val deprecated = getArgument<Boolean>("deprecated")
+    val deprecatedReason = getArgument<String>("deprecatedReason")
     val dataBinding = getArgument<ArrayList<String>>("dataBinding")
     val then = if (kind == "BLOCK") {
         Then::class.qualifiedName.orEmpty()
@@ -141,6 +153,8 @@ internal fun KSAnnotation.generateEventJson(
     val eventJson = Event(
         event = name,
         description = description,
+        deprecated = deprecated,
+        deprecatedReason = deprecatedReason,
         functionName = param.name?.asString().orEmpty(),
         dataBinding = dataBinding,
         then = thenMapper(then)
@@ -150,20 +164,28 @@ internal fun KSAnnotation.generateEventJson(
 
 internal fun KSAnnotation.generateDataJson(param: KSValueParameter): Data {
     val description = getArgument<String>("description")
+    val deprecated = getArgument<Boolean>("deprecated")
+    val deprecatedReason = getArgument<String>("deprecatedReason")
     val key = param.name?.asString().orEmpty()
     val dataJson = Data(
         key = key,
         type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
         description = description,
+        deprecated = deprecated,
+        deprecatedReason = deprecatedReason,
     )
     return dataJson
 }
 
 internal fun KSAnnotation.generateSlotJson(param: KSValueParameter): Slot {
     val description = getArgument<String>("description")
+    val deprecated = getArgument<Boolean>("deprecated")
+    val deprecatedReason = getArgument<String>("deprecatedReason")
     val slotJson = Slot(
         slot = param.name?.asString().orEmpty(),
         description = description,
+        deprecated = deprecated,
+        deprecatedReason = deprecatedReason,
     )
     return slotJson
 }

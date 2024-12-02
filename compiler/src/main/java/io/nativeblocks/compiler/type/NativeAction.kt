@@ -5,6 +5,9 @@ annotation class NativeAction(
     val keyType: String,
     val name: String,
     val description: String,
+    val version: Int = 1,
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
 )
 
 @Target(AnnotationTarget.CLASS)
@@ -20,17 +23,25 @@ annotation class NativeActionProp(
     val valuePickerGroup: NativeActionValuePickerPosition = NativeActionValuePickerPosition(
         text = "General"
     ),
-    val valuePickerOptions: Array<NativeActionValuePickerOption> = []
+    val valuePickerOptions: Array<NativeActionValuePickerOption> = [],
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
 )
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class NativeActionData(val description: String = "")
+annotation class NativeActionData(
+    val description: String = "",
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
+)
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeActionEvent(
     val then: Then = Then.END,
     val description: String = "",
-    val dataBinding: Array<String> = []
+    val dataBinding: Array<String> = [],
+    val deprecated: Boolean = false,
+    val deprecatedReason: String = ""
 )
 
 enum class Then {

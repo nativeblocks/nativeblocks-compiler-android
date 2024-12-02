@@ -12,12 +12,12 @@ import io.nativeblocks.sampleapp.integration.consumer.action.DemoActionProvider
 import io.nativeblocks.sampleapp.integration.consumer.block.DemoBlockProvider
 
 private const val NATIVEBLOCKS_API_KEY = ""
-private const val NATIVEBLOCKS_API_URL = "https://us.api.nativeblocks.io/graphql"
+private const val NATIVEBLOCKS_API_URL = "https://api.nativeblocks.io/graphql"
 
 class MainActivity : ComponentActivity() {
 
     // it can provide with DI
-    private val xBot = XBot()
+    private val aIBot = AIChatBot()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,11 +32,12 @@ class MainActivity : ComponentActivity() {
         )
 
         DemoBlockProvider.provideBlocks()
-        DemoActionProvider.provideActions(xBot)
+        DemoActionProvider.provideActions(aIBot)
 
         setContent {
             NativeblocksFrame(
                 frameRoute = "/",
+                routeArguments = hashMapOf(),
                 loading = {
                     NativeblocksLoading()
                 },
