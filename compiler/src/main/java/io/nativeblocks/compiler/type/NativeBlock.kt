@@ -1,7 +1,20 @@
 package io.nativeblocks.compiler.type
 
+/**
+ * Alias for the index of a block.
+ */
 typealias BlockIndex = Int
 
+/**
+ * Annotation to define a Native Block within the Nativeblocks system.
+ *
+ * @property keyType The type of key associated with the block.
+ * @property name The name of the block.
+ * @property description A description of the block.
+ * @property version The version of the block. Defaults to 1.
+ * @property deprecated Indicates if the block is deprecated.
+ * @property deprecatedReason Reason for deprecation, if applicable.
+ */
 @Target(AnnotationTarget.FUNCTION)
 annotation class NativeBlock(
     val keyType: String,
@@ -12,6 +25,16 @@ annotation class NativeBlock(
     val deprecatedReason: String = ""
 )
 
+/**
+ * Annotation to define a property for a Native Block.
+ *
+ * @property description A brief description of the property.
+ * @property valuePicker Specifies the type of value picker to use for this property.
+ * @property valuePickerGroup Defines the grouping of the value picker for UI purposes.
+ * @property valuePickerOptions Array of selectable options, if applicable.
+ * @property deprecated Indicates if the property is deprecated.
+ * @property deprecatedReason Reason for deprecation, if applicable.
+ */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockProp(
     val description: String = "",
@@ -24,6 +47,13 @@ annotation class NativeBlockProp(
     val deprecatedReason: String = ""
 )
 
+/**
+ * Annotation to define data binding for a Native Block.
+ *
+ * @property description A brief description of the data binding.
+ * @property deprecated Indicates if the data binding is deprecated.
+ * @property deprecatedReason Reason for deprecation, if applicable.
+ */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockData(
     val description: String = "",
@@ -31,6 +61,14 @@ annotation class NativeBlockData(
     val deprecatedReason: String = ""
 )
 
+/**
+ * Annotation to define an event binding for a Native Block.
+ *
+ * @property description A brief description of the event binding.
+ * @property dataBinding Array of data bindings for the event.
+ * @property deprecated Indicates if the event binding is deprecated.
+ * @property deprecatedReason Reason for deprecation, if applicable.
+ */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockEvent(
     val description: String = "",
@@ -39,6 +77,13 @@ annotation class NativeBlockEvent(
     val deprecatedReason: String = ""
 )
 
+/**
+ * Annotation to define a slot for a Native Block.
+ *
+ * @property description A brief description of the slot.
+ * @property deprecated Indicates if the slot is deprecated.
+ * @property deprecatedReason Reason for deprecation, if applicable.
+ */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockSlot(
     val description: String = "",
@@ -46,15 +91,29 @@ annotation class NativeBlockSlot(
     val deprecatedReason: String = ""
 )
 
+/**
+ * Annotation to define options for a value picker in Native Blocks.
+ *
+ * @property id Unique identifier for the option.
+ * @property text Display text for the option.
+ */
 annotation class NativeBlockValuePickerOption(
     val id: String,
     val text: String
 )
 
+/**
+ * Annotation to define the grouping position of a value picker in the UI.
+ *
+ * @property text The text label for the group.
+ */
 annotation class NativeBlockValuePickerPosition(
     val text: String,
 )
 
+/**
+ * Enum representing the types of value pickers available for Native Block properties.
+ */
 enum class NativeBlockValuePicker {
     TEXT_INPUT,
     TEXT_AREA_INPUT,
