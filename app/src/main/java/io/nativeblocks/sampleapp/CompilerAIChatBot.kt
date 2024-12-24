@@ -9,13 +9,12 @@ import io.nativeblocks.compiler.type.NativeActionProp
 import io.nativeblocks.compiler.type.Then
 
 @NativeAction(
-    keyType = "AI_CHAT_BOT",
-    name = "AI Chat bot",
+    keyType = "COMPILER_AI_CHAT_BOT",
+    name = "Compiler AI Chat bot",
     description = "This is a bot",
-    version = 2
+    version = 1
 )
-class AIChatBot {
-
+class CompilerAIChatBot {
     @NativeActionParameter
     data class Param(
         @NativeActionProp val apiKey: String,

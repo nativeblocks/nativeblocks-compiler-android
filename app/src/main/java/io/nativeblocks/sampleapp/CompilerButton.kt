@@ -24,15 +24,13 @@ import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
 
 @NativeBlock(
-    name = "AI button",
-    keyType = "AI_BUTTON",
+    name = "Compiler button",
+    keyType = "COMPILER_BUTTON",
     description = "This is a button",
     version = 1,
-    deprecated = true,
-    deprecatedReason = ""
 )
 @Composable
-fun AIButton(
+fun CompilerButton(
     @NativeBlockData(
         description = "Button text",
         deprecated = true
@@ -89,7 +87,7 @@ fun AIButton(
 @Composable
 private fun XButtonPreview1() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "S", {}, {}) {
+        CompilerButton(text = "Hello", size = "S", {}, {}) {
         }
     }
 }
@@ -98,7 +96,7 @@ private fun XButtonPreview1() {
 @Composable
 private fun XButtonPreview2() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "M", {}, {}) {
+        CompilerButton(text = "Hello", size = "M", {}, {}) {
         }
     }
 }
@@ -107,7 +105,7 @@ private fun XButtonPreview2() {
 @Composable
 private fun XButtonPreview3() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "L", {}, {}) {
+        CompilerButton(text = "Hello", size = "L", {}, {}) {
         }
     }
 }

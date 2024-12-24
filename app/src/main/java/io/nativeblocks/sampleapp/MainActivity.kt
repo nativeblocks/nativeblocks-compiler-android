@@ -8,8 +8,10 @@ import io.nativeblocks.core.api.NativeblocksError
 import io.nativeblocks.core.api.NativeblocksFrame
 import io.nativeblocks.core.api.NativeblocksLoading
 import io.nativeblocks.core.api.NativeblocksManager
+import io.nativeblocks.foundation.integration.consumer.block.FoundationBlockProvider
 import io.nativeblocks.sampleapp.integration.consumer.action.DemoActionProvider
 import io.nativeblocks.sampleapp.integration.consumer.block.DemoBlockProvider
+import io.nativeblocks.wandkit.liveKit
 
 private const val NATIVEBLOCKS_API_KEY = ""
 private const val NATIVEBLOCKS_API_URL = "https://api.nativeblocks.io/graphql"
@@ -17,7 +19,7 @@ private const val NATIVEBLOCKS_API_URL = "https://api.nativeblocks.io/graphql"
 class MainActivity : ComponentActivity() {
 
     // it can provide with DI
-    private val aIBot = AIChatBot()
+    private val aIBot = CompilerAIChatBot()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +33,8 @@ class MainActivity : ComponentActivity() {
             )
         )
 
+        NativeblocksManager.getInstance().liveKit()
+        FoundationBlockProvider.provideBlocks()
         DemoBlockProvider.provideBlocks()
         DemoActionProvider.provideActions(aIBot)
 
