@@ -43,6 +43,7 @@ internal class ActionVisitor(
         val importNativeActionTriggerDataModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
+        val importActionString = ClassName("io.nativeblocks.core.util", "toActionDataStringValue")
 
         val func = FunSpec.builder("handle")
             .addModifiers(KModifier.OVERRIDE)
@@ -60,6 +61,12 @@ internal class ActionVisitor(
         metaData.forEach {
             func.addStatement("val ${it.key} = actionProps.variables?.get(data[\"${it.key}\"]?.value)")
         }
+
+        func.addComment("action trigger data value")
+        metaData.forEach {
+            func.addStatement("val ${it.key}Value = ${dataTypeMapper(it)}")
+        }
+
         func.addComment("action trigger properties")
         metaProperties.forEach {
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
@@ -73,8 +80,9 @@ internal class ActionVisitor(
             .addStatement("")
 
         metaData.map {
-            func.addStatement("${it.key} = ${dataTypeMapper(it)},")
+            func.addStatement("${it.key} = ${it.key}Value,")
         }
+
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
         }
@@ -134,6 +142,7 @@ internal class ActionVisitor(
             .addImport(importNativeActionTriggerDataModel, "")
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
+            .addImport(importActionString, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .primaryConstructor(flux)
@@ -164,12 +173,12 @@ internal class ActionVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value ?: """""
-            "INT" -> """${dataItem.key}?.value?.toIntOrNull() ?: ${0}"""
-            "LONG" -> """${dataItem.key}?.value?.toLongOrNull() ?: ${0L}"""
-            "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
+            "STRING" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables) ?: """""
+            "INT" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toIntOrNull() ?: ${0}"""
+            "LONG" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toLongOrNull() ?: ${0L}"""
+            "FLOAT" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toFloatOrNull() ?: ${0.0F}"""
+            "DOUBLE" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toDoubleOrNull() ?: ${0.0}"""
+            "BOOLEAN" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
