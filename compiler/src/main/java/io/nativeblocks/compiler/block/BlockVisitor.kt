@@ -159,7 +159,7 @@ internal class BlockVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toBlockDataStringValue(blockProps.variables,blockProps.listItemIndex) ?: "" """
+            "STRING" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy) ?: "" """
             "INT" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toIntOrNull() ?: 0 """
             "LONG" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toLongOrNull() ?: 0L """
             "FLOAT" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toFloatOrNull() ?: 0.0F """

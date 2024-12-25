@@ -3,7 +3,7 @@ package io.nativeblocks.sampleapp
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -25,13 +25,14 @@ import io.nativeblocks.compiler.type.NativeBlockSlot
 import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
 import io.nativeblocks.compiler.type.NativeBlockValuePickerPosition
+import io.nativeblocks.core.util.json.NativeJsonPath
 import io.nativeblocks.core.util.widthAndHeight
 
 @NativeBlock(
     name = "Compiler list",
     keyType = "COMPILER_LIST",
     description = "This is a list",
-    version = 2,
+    version = 3,
 )
 @Composable
 fun NativeList(
@@ -74,6 +75,7 @@ fun NativeList(
     ) direction: String = "LTR",
     @NativeBlockData listStartIndex: Int = 0,
     @NativeBlockData listLength: Int = 0,
+    @NativeBlockData list: String = "",
     @NativeBlockSlot content: @Composable (index: BlockIndex) -> Unit
 ) {
     val blockDirection =
@@ -83,7 +85,12 @@ fun NativeList(
     val modifier = Modifier
         .widthAndHeight(width, height)
 
-    val list = List(listLength) { index -> listStartIndex + index }
+    val listItems: List<*> = try {
+        NativeJsonPath().query(list, "$") as List<*>
+    } catch (e: Exception) {
+        e.printStackTrace()
+        listOf<Any>()
+    }
 
     when (orientation) {
         "VERTICAL" -> {
@@ -91,8 +98,8 @@ fun NativeList(
                 LazyColumn(
                     modifier = modifier,
                 ) {
-                    items(list) { item ->
-                        content.invoke(item)
+                    itemsIndexed(listItems) { index, _ ->
+                        content.invoke(index)
                     }
                 }
             }
@@ -103,8 +110,8 @@ fun NativeList(
                 LazyRow(
                     modifier = modifier,
                 ) {
-                    items(list) { item ->
-                        content.invoke(item)
+                    itemsIndexed(listItems) { index, _ ->
+                        content.invoke(index)
                     }
                 }
             }
