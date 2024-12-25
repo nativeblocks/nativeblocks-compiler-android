@@ -58,7 +58,11 @@ internal class BlockVisitor(
         func.addStatement("")
         func.addComment("block data")
         metaData.forEach {
-            func.addStatement("val ${it.key} = ${dataTypeMapper(it)}")
+            func.addStatement("val ${it.key} = blockProps.variables?.get(data[\"${it.key}\"]?.value)")
+        }
+        func.addComment("block data value")
+        metaData.forEach {
+            func.addStatement("val ${it.key}Value = ${dataTypeMapper(it)}")
         }
         func.addComment("block properties")
         metaProperties.forEach {
@@ -78,7 +82,7 @@ internal class BlockVisitor(
             .addCode(CodeBlock.builder().indent().build())
             .addStatement("")
         metaData.map {
-            func.addStatement("${it.key} = ${it.key},")
+            func.addStatement("${it.key} = ${it.key}Value,")
         }
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
@@ -159,18 +163,13 @@ internal class BlockVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy) ?: "" """
-            "INT" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toIntOrNull() ?: 0 """
-            "LONG" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toLongOrNull() ?: 0L """
-            "FLOAT" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toFloatOrNull() ?: 0.0F """
-            "DOUBLE" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.toDoubleOrNull() ?: 0.0 """
-            "BOOLEAN" -> """blockProps.variables?.get(data["${dataItem.key}"]?.value)?.value?.lowercase()?.toBooleanStrictOrNull() ?: false """
-            else -> throw Diagnostic.exceptionDispatcher(
-                DiagnosticType.MetaCustomType(
-                    dataItem.key,
-                    dataItem.type
-                )
-            )
+            "STRING" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy) ?: "" """
+            "INT" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toIntOrNull() ?: 0 """
+            "LONG" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toLongOrNull() ?: 0L """
+            "FLOAT" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toFloatOrNull() ?: 0.0F """
+            "DOUBLE" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toDoubleOrNull() ?: 0.0 """
+            "BOOLEAN" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.lowercase()?.toBooleanStrictOrNull() ?: false """
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
 }
