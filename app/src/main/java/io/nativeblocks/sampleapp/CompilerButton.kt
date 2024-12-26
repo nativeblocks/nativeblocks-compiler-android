@@ -27,14 +27,18 @@ import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
     name = "Compiler button",
     keyType = "COMPILER_BUTTON",
     description = "This is a button",
-    version = 1,
+    version = 2,
 )
 @Composable
 fun CompilerButton(
     @NativeBlockData(
         description = "Button text",
-        deprecated = true
+        deprecated = false
     ) text: String,
+    @NativeBlockData(
+        description = "Button key",
+        deprecated = false
+    ) key: String,
     @NativeBlockProp(
         description = "Button size",
         valuePicker = NativeBlockValuePicker.DROPDOWN,
@@ -52,7 +56,8 @@ fun CompilerButton(
     ) onTrailingIcon: (@Composable (index: BlockIndex) -> Unit)? = null,
     @NativeBlockEvent(
         description = "Button on click",
-    ) onClick: () -> Unit,
+        dataBinding = ["key"]
+    ) onClick: (String) -> Unit,
 ) {
     val padding = when (size) {
         "S" -> PaddingValues(4.dp)
@@ -70,7 +75,7 @@ fun CompilerButton(
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(),
         onClick = {
-            onClick.invoke()
+            onClick.invoke(key)
         }
     ) {
         onLeadingIcon(-1)
@@ -87,7 +92,7 @@ fun CompilerButton(
 @Composable
 private fun XButtonPreview1() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CompilerButton(text = "Hello", size = "S", {}, {}) {
+        CompilerButton(text = "Hello", size = "S", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }
@@ -96,7 +101,7 @@ private fun XButtonPreview1() {
 @Composable
 private fun XButtonPreview2() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CompilerButton(text = "Hello", size = "M", {}, {}) {
+        CompilerButton(text = "Hello", size = "M", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }
@@ -105,7 +110,7 @@ private fun XButtonPreview2() {
 @Composable
 private fun XButtonPreview3() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CompilerButton(text = "Hello", size = "L", {}, {}) {
+        CompilerButton(text = "Hello", size = "L", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }
