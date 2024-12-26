@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
         NativeblocksManager.getInstance().liveKit()
         FoundationBlockProvider.provideBlocks()
         DemoBlockProvider.provideBlocks()
-        DemoActionProvider.provideActions(aIBot)
+        DemoActionProvider.provideActions(aIBot,CompilerJsonParser())
 
         setContent {
             NativeblocksFrame(

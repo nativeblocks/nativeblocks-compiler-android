@@ -10,6 +10,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
 import io.nativeblocks.compiler.util.Diagnostic
@@ -26,6 +27,7 @@ internal class BlockVisitor(
     private val metaEvents: MutableList<Event>,
     private val metaData: MutableList<Data>,
     private val metaSlots: MutableList<Slot>,
+    private val extraParams: MutableList<ExtraParam>,
 ) : KSVisitorVoid() {
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
@@ -81,6 +83,11 @@ internal class BlockVisitor(
         func.addCode(function.simpleName.asString()).addCode("(")
             .addCode(CodeBlock.builder().indent().build())
             .addStatement("")
+
+        extraParams.map {
+            func.addStatement("${it.key} = ${it.key},")
+        }
+
         metaData.map {
             func.addStatement("${it.key} = ${it.key}Value,")
         }

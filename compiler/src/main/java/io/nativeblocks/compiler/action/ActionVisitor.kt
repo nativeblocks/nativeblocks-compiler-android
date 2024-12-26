@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
@@ -30,6 +31,7 @@ internal class ActionVisitor(
     private val metaProperties: MutableList<Property>,
     private val metaEvents: MutableList<Event>,
     private val metaData: MutableList<Data>,
+    private val extraParams: MutableList<ExtraParam>,
 ) : KSVisitorVoid() {
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -78,6 +80,10 @@ internal class ActionVisitor(
             .addCode(CodeBlock.builder().indent().build())
             .addCode(klass.simpleName.asString() + "." + functionParameter.simpleName.asString() + "(")
             .addStatement("")
+
+        extraParams.map {
+            func.addStatement("${it.key} = ${it.key},")
+        }
 
         metaData.map {
             func.addStatement("${it.key} = ${it.key}Value,")

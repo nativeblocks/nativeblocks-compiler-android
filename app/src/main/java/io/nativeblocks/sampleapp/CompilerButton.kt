@@ -22,6 +22,7 @@ import io.nativeblocks.compiler.type.NativeBlockProp
 import io.nativeblocks.compiler.type.NativeBlockSlot
 import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
+import io.nativeblocks.core.api.provider.block.BlockProps
 
 @NativeBlock(
     name = "Compiler button",
@@ -31,6 +32,7 @@ import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
 )
 @Composable
 fun CompilerButton(
+    blockProps: BlockProps? = null,
     @NativeBlockData(
         description = "Button text",
         deprecated = false
