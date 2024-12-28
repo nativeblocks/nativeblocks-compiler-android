@@ -179,12 +179,12 @@ internal class ActionVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables) ?: """""
-            "INT" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toIntOrNull() ?: ${0}"""
-            "LONG" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toLongOrNull() ?: ${0L}"""
-            "FLOAT" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toFloatOrNull() ?: ${0.0F}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.toDoubleOrNull() ?: ${0.0}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables)?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
+            "STRING" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables, actionProps.listItemIndex) ?: """""
+            "INT" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables, actionProps.listItemIndex)?.toIntOrNull() ?: ${0}"""
+            "LONG" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables, actionProps.listItemIndex)?.toLongOrNull() ?: ${0L}"""
+            "FLOAT" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables, actionProps.listItemIndex)?.toFloatOrNull() ?: ${0.0F}"""
+            "DOUBLE" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables, actionProps.listItemIndex)?.toDoubleOrNull() ?: ${0.0}"""
+            "BOOLEAN" -> """${dataItem.key}?.value?.toActionDataStringValue(actionProps.variables, actionProps.listItemIndex)?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
