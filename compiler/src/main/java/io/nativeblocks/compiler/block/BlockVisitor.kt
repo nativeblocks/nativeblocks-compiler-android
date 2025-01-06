@@ -35,6 +35,7 @@ internal class BlockVisitor(
         val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
+        val importBlockProvideSlot = ClassName("io.nativeblocks.core.util", "blockProvideSlot")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
@@ -65,7 +66,7 @@ internal class BlockVisitor(
         }
         func.addComment("block slots")
         metaSlots.forEach {
-            func.addStatement("val ${it.slot} = slots[\"${it.slot}\"]")
+            func.addStatement("val ${it.slot} = blockProvideSlot(blockProps, slots, \"${it.slot}\") ")
         }
         func.addComment("block events")
         metaEvents.forEach {
@@ -132,6 +133,7 @@ internal class BlockVisitor(
 
         val blockClass = FileSpec.builder(packageName, fileName)
             .addImport(importBlockFunction, "")
+            .addImport(importBlockProvideSlot, "")
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addType(
