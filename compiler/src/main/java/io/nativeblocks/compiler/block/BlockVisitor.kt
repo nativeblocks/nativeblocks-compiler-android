@@ -115,19 +115,36 @@ internal class BlockVisitor(
         }
         metaEvents.forEach {
             val eventArg = function.parameters.find { arg -> arg.name?.asString() == it.event }
-            val eventArgSize = eventArg?.type?.resolve()?.arguments?.size ?: 0
+            val type = eventArg?.type?.resolve()
+            val eventArgSize = type?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
             items.removeLast()
 
-            func.addStatement("${it.event} = { ${items.joinToString()} ->")
-            it.dataBinding.forEachIndexed { index, dataBound ->
-                func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
-                    .beginControlFlow("if (${dataBound}Updated != null)")
-                    .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
-                    .endControlFlow()
+            if (type?.isMarkedNullable == true) {
+                func.beginControlFlow("${it.event} = if (${it.event} != null)")
+                func.addStatement("{ ${items.joinToString()} ->")
+                it.dataBinding.forEachIndexed { index, dataBound ->
+                    func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
+                        .beginControlFlow("if (${dataBound}Updated != null)")
+                        .addStatement("blockProps.onVariableChange.invoke(${dataBound}Updated)")
+                        .endControlFlow()
+                }
+                func.addStatement("${it.event}.invoke()")
+                func.addStatement("}")
+                func.addStatement("}else {")
+                func.addStatement("null")
+                func.addStatement("},")
+            } else {
+                func.addStatement("${it.event} = { ${items.joinToString()} ->")
+                it.dataBinding.forEachIndexed { index, dataBound ->
+                    func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
+                        .beginControlFlow("if (${dataBound}Updated != null)")
+                        .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
+                        .endControlFlow()
+                }
+                func.addStatement("${it.event}?.invoke()")
+                func.addStatement("},")
             }
-            func.addStatement("${it.event}?.invoke()")
-            func.addStatement("},")
         }
         func.addCode(")")
 
