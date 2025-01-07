@@ -70,19 +70,6 @@ fun CompilerButton(
         "L" -> TextUnit(32f, TextUnitType.Sp)
         else -> TextUnit(16f, TextUnitType.Sp)
     }
-//    key.extractKeyVariables("index").forEach { (key, value) ->
-//        if (value == null) {
-//            val pointerVariableIndex = blockProps?.hierarchy?.getOrNull(blockProps.hierarchy?.size - 1)?.position
-//            if (pointerVariableIndex != null) {
-//                query = query.getVariableValue("index", "$pointerVariableIndex")
-//            }
-//        } else {
-//            val pointerVariable = hierarchy?.firstOrNull { it.key == value }?.position
-//            if (pointerVariable != null) {
-//                query = query.getVariableValue("index:$value", "$pointerVariable")
-//            }
-//        }
-//    }
     Button(
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(),
@@ -99,20 +86,6 @@ fun CompilerButton(
         onTrailingIcon?.invoke(-1)
     }
 }
-
-fun String.extractKeyVariables(key: String): List<Pair<String, String?>> {
-    val regex = """\{$key(?::[^}]*)?\}""".toRegex()
-    val matches = regex.findAll(this)
-
-    return matches.map { match ->
-        val content = match.value.removeSurrounding("{", "}")
-        val parts = content.split(":")
-        val index = parts[0]
-        val value = parts.getOrNull(1)
-        index to value
-    }.toList()
-}
-
 
 @Preview
 @Composable

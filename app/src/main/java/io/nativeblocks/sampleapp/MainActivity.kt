@@ -13,7 +13,6 @@ import io.nativeblocks.core.api.provider.logger.INativeLogger
 import io.nativeblocks.foundation.integration.consumer.block.FoundationBlockProvider
 import io.nativeblocks.sampleapp.integration.consumer.action.DemoActionProvider
 import io.nativeblocks.sampleapp.integration.consumer.block.DemoBlockProvider
-import io.nativeblocks.wandkit.liveKit
 
 private const val NATIVEBLOCKS_API_KEY = ""
 private const val NATIVEBLOCKS_API_URL = "https://api.nativeblocks.io/graphql"
@@ -39,7 +38,7 @@ class MainActivity : ComponentActivity() {
         NativeblocksManager.getInstance().provideEventLogger("app", AppLogger())
         FoundationBlockProvider.provideBlocks()
         DemoBlockProvider.provideBlocks()
-        DemoActionProvider.provideActions(aIBot, CompilerJsonParser())
+        DemoActionProvider.provideActions(aIBot)
 
         setContent {
             NativeblocksFrame(

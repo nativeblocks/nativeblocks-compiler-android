@@ -7,6 +7,7 @@ import io.nativeblocks.compiler.type.NativeActionFunction
 import io.nativeblocks.compiler.type.NativeActionParameter
 import io.nativeblocks.compiler.type.NativeActionProp
 import io.nativeblocks.compiler.type.Then
+import io.nativeblocks.core.api.provider.action.ActionProps
 
 @NativeAction(
     keyType = "COMPILER_AI_CHAT_BOT",
@@ -17,6 +18,7 @@ import io.nativeblocks.compiler.type.Then
 class CompilerAIChatBot {
     @NativeActionParameter
     data class Param(
+        val actionProps: ActionProps? = null,
         @NativeActionProp val apiKey: String,
         @NativeActionProp val aiModelId: String,
         @NativeActionData val userPrompt: String,
