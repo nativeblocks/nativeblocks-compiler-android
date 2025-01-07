@@ -37,7 +37,7 @@ internal class BlockVisitor(
         val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
-        val importBlockString = ClassName("io.nativeblocks.core.util", "toBlockDataStringValue")
+        val importBlockString = ClassName("io.nativeblocks.core.util", "parseWithJsonPath")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
@@ -170,12 +170,12 @@ internal class BlockVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy) ?: "" """
-            "INT" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toIntOrNull() ?: 0 """
-            "LONG" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toLongOrNull() ?: 0L """
-            "FLOAT" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toFloatOrNull() ?: 0.0F """
-            "DOUBLE" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.toDoubleOrNull() ?: 0.0 """
-            "BOOLEAN" -> """${dataItem.key}?.value?.toBlockDataStringValue(blockProps.variables,blockProps.hierarchy)?.lowercase()?.toBooleanStrictOrNull() ?: false """
+            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy) ?: "" """
+            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toIntOrNull() ?: 0 """
+            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toLongOrNull() ?: 0L """
+            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toFloatOrNull() ?: 0.0F """
+            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toDoubleOrNull() ?: 0.0 """
+            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.lowercase()?.toBooleanStrictOrNull() ?: false """
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
