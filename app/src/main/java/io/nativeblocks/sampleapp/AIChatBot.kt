@@ -9,7 +9,7 @@ import io.nativeblocks.compiler.type.NativeActionProp
 import io.nativeblocks.compiler.type.Then
 
 @NativeAction(
-    keyType = "AI_CHAT_BOT",
+    keyType = "COMPILER_AI_CHAT_BOT",
     name = "AI Chat bot",
     description = "This is a bot",
     version = 2

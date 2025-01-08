@@ -39,6 +39,7 @@ internal data class Property(
     val valuePicker: String,
     val valuePickerGroup: String,
     val valuePickerOptions: String,
+    @Transient val typeClass: String = "",
 )
 
 @Serializable

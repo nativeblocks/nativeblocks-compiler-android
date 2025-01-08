@@ -102,26 +102,31 @@ internal fun KSAnnotation.generatePropertyJson(
         }
     }
 
-    val defaultValue = param.getDefaultValue(resolver)
-    var default = if (defaultValue?.imports?.isNotEmpty() == true) {
-        defaultValue.imports.first().substringBeforeLast('.') + "." + defaultValue.code
-    } else {
-        defaultValue?.code
-    }
-
-    val type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
-    if (type == "STRING") {
-        val p: Pattern = Pattern.compile("\"([^\"]*)\"")
-        val m: Matcher = p.matcher(default.orEmpty())
-        while (m.find()) {
-            default = m.group(1)
+    val typeClass = param.type.resolve().declaration.qualifiedName?.asString().orEmpty()
+    var type = "STRING"
+    var default = ""
+    if (isPrimitiveType(typeClass)) {
+        type = typeMapper(key, typeClass)
+        val defaultValue = param.getDefaultValue(resolver)
+        default = if (defaultValue?.imports?.isNotEmpty() == true) {
+            defaultValue.imports.first().substringBeforeLast('.') + "." + defaultValue.code
+        } else {
+            defaultValue?.code.orEmpty()
+        }
+        if (type == "STRING") {
+            val p: Pattern = Pattern.compile("\"([^\"]*)\"")
+            val m: Matcher = p.matcher(default)
+            while (m.find()) {
+                default = m.group(1)
+            }
         }
     }
 
     val propertyJson = Property(
         key = key,
-        value = default.orEmpty(),
+        value = default,
         type = type,
+        typeClass = typeClass,
         description = description,
         deprecated = deprecated,
         deprecatedReason = deprecatedReason,
@@ -214,6 +219,16 @@ private fun thenMapper(then: String): String {
         "$cn.NEXT" -> "NEXT"
         "$cn.END" -> "END"
         else -> "END"
+    }
+}
+
+private fun isPrimitiveType(type: String): Boolean {
+    return when (type) {
+        "kotlin.String", "kotlin.Int",
+        "kotlin.Long", "kotlin.Boolean",
+        "kotlin.Float", "kotlin.Double" -> true
+
+        else -> false
     }
 }
 

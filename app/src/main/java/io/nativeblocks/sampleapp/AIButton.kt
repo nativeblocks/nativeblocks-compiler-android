@@ -11,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -25,17 +26,14 @@ import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
 
 @NativeBlock(
     name = "AI button",
-    keyType = "AI_BUTTON",
+    keyType = "COMPILER_AI_BUTTON",
     description = "This is a button",
-    version = 1,
-    deprecated = true,
-    deprecatedReason = ""
+    version = 2
 )
 @Composable
 fun AIButton(
     @NativeBlockData(
-        description = "Button text",
-        deprecated = true
+        description = "Button text"
     ) text: String,
     @NativeBlockProp(
         description = "Button size",
@@ -46,6 +44,8 @@ fun AIButton(
             NativeBlockValuePickerOption("L", "Large")
         ]
     ) size: String = "S",
+    @NativeBlockProp(description = "Button padding")
+    padding: Dp? = 1.dp,
     @NativeBlockSlot(
         description = "Button leading icon",
     ) onLeadingIcon: @Composable (index: BlockIndex) -> Unit,
@@ -89,7 +89,7 @@ fun AIButton(
 @Composable
 private fun XButtonPreview1() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "S", {}, {}) {
+        AIButton(text = "Hello", size = "S", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }
@@ -98,7 +98,7 @@ private fun XButtonPreview1() {
 @Composable
 private fun XButtonPreview2() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "M", {}, {}) {
+        AIButton(text = "Hello", size = "M", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }
@@ -107,7 +107,7 @@ private fun XButtonPreview2() {
 @Composable
 private fun XButtonPreview3() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "L", {}, {}) {
+        AIButton(text = "Hello", size = "L", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }

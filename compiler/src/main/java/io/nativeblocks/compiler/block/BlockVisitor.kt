@@ -34,6 +34,7 @@ internal class BlockVisitor(
         val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
         val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
+        val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
 
         val func = FunSpec.builder("BlockView")
@@ -134,6 +135,7 @@ internal class BlockVisitor(
             .addImport(importBlockFunction, "")
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
+            .addImport(importNativeblocksManager, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .addSuperinterface(importINativeBlock)
@@ -144,14 +146,14 @@ internal class BlockVisitor(
     }
 
     private fun propTypeMapper(prop: Property): Any {
-        return when (prop.type) {
-            "STRING" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.ifEmpty { "" }}" """
-            "INT" -> """findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
-            "LONG" -> """findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
+        return when (prop.typeClass) {
+            "kotlin.String" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.ifEmpty { "" }}" """
+            "kotlin.Int" -> """findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
+            "kotlin.Long" -> """findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
+            "kotlin.Float" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
+            "kotlin.Double" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
+            "kotlin.Boolean" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
+            else -> """NativeblocksManager.getInstance().getTypeSerializer(${prop.typeClass}::class)?.fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "" ))"""
         }
     }
 
