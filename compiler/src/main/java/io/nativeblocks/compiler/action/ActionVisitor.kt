@@ -42,6 +42,7 @@ internal class ActionVisitor(
         val importNativeActionTriggerPropertyModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
         val importNativeActionTriggerDataModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
+        val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
 
         val func = FunSpec.builder("handle")
@@ -134,6 +135,7 @@ internal class ActionVisitor(
             .addImport(importNativeActionTriggerDataModel, "")
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
+            .addImport(importNativeblocksManager, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .primaryConstructor(flux)
@@ -151,14 +153,14 @@ internal class ActionVisitor(
     }
 
     private fun propTypeMapper(prop: Property): Any {
-        return when (prop.type) {
-            "STRING" -> """properties["${prop.key}"]?.value ?: "${prop.value}""""
-            "INT" -> """properties["${prop.key}"]?.value?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
-            "LONG" -> """properties["${prop.key}"]?.value?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
+        return when (prop.typeClass) {
+            "kotlin.String" -> """properties["${prop.key}"]?.value ?: "${prop.value}""""
+            "kotlin.Int" -> """properties["${prop.key}"]?.value?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
+            "kotlin.Long" -> """properties["${prop.key}"]?.value?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
+            "kotlin.Float" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
+            "kotlin.Double" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
+            "kotlin.Boolean" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
+            else -> """NativeblocksManager.getInstance().getTypeSerializer(${prop.typeClass}::class).fromString(properties["${prop.key}"]?.value ?: "${prop.value}")"""
         }
     }
 

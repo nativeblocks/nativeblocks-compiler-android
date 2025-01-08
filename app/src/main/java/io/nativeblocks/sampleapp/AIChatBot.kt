@@ -20,6 +20,7 @@ class AIChatBot {
     data class Param(
         @NativeActionProp val apiKey: String,
         @NativeActionProp val aiModelId: String,
+        @NativeActionProp val config: Config? = Config(type = "ChatGbt"),
         @NativeActionData val userPrompt: String,
         @NativeActionData val result: String,
         @NativeActionData val errorMessage: String,

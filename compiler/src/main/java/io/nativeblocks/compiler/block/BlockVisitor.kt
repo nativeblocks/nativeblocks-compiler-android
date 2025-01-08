@@ -153,7 +153,7 @@ internal class BlockVisitor(
             "kotlin.Float" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
             "kotlin.Double" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
             "kotlin.Boolean" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> """NativeblocksManager.getInstance().getTypeSerializer(${prop.typeClass}::class)?.fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "" ))"""
+            else -> """NativeblocksManager.getInstance().getTypeSerializer(${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "" ))"""
         }
     }
 

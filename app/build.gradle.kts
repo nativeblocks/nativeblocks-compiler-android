@@ -67,6 +67,7 @@ ksp {
 }
 
 dependencies {
+    implementation ("com.google.code.gson:gson:2.11.0")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.material:material:1.7.4")
