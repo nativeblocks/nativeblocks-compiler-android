@@ -51,7 +51,8 @@ annotation class NativeActionProp(
     ),
     val valuePickerOptions: Array<NativeActionValuePickerOption> = [],
     val deprecated: Boolean = false,
-    val deprecatedReason: String = ""
+    val deprecatedReason: String = "",
+    val defaultValue :String = ""
 )
 
 /**
@@ -65,7 +66,8 @@ annotation class NativeActionProp(
 annotation class NativeActionData(
     val description: String = "",
     val deprecated: Boolean = false,
-    val deprecatedReason: String = ""
+    val deprecatedReason: String = "",
+    val defaultValue :String = ""
 )
 
 /**

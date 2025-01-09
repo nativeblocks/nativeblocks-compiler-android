@@ -16,6 +16,7 @@ import io.nativeblocks.compiler.meta.Slot
 import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.plusAssign
+import io.nativeblocks.compiler.util.stringify
 import java.io.OutputStream
 
 internal class BlockVisitor(
@@ -33,8 +34,10 @@ internal class BlockVisitor(
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
         val importComposable = ClassName("androidx.compose.runtime", "Composable")
         val importBlockProps = ClassName("io.nativeblocks.core.api.provider.block", "BlockProps")
-        val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
-        val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
+        val importINativeBlock =
+            ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
+        val importBlockFindWindowSizeClass =
+            ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
@@ -160,25 +163,30 @@ internal class BlockVisitor(
 
     private fun propTypeMapper(prop: Property): Any {
         return when (prop.typeClass) {
-            "kotlin.String" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.ifEmpty { "" }}" """
+            "kotlin.String" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}""""
             "kotlin.Int" -> """findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
             "kotlin.Long" -> """findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
             "kotlin.Float" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
             "kotlin.Double" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
             "kotlin.Boolean" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> """NativeblocksManager.getInstance().getTypeSerializer(${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "" ))"""
+            else -> """NativeblocksManager.getInstance().getTypeSerializer(${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}" ))"""
         }
     }
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy) ?: "" """
-            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toIntOrNull() ?: 0 """
-            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toLongOrNull() ?: 0L """
-            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toFloatOrNull() ?: 0.0F """
-            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toDoubleOrNull() ?: 0.0 """
-            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.lowercase()?.toBooleanStrictOrNull() ?: false """
-            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
+            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }} """
+            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }} """
+            else -> throw Diagnostic.exceptionDispatcher(
+                DiagnosticType.MetaCustomType(
+                    dataItem.key,
+                    dataItem.type
+                )
+            )
         }
     }
 }

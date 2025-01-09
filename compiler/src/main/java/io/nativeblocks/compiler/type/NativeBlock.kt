@@ -44,7 +44,8 @@ annotation class NativeBlockProp(
     ),
     val valuePickerOptions: Array<NativeBlockValuePickerOption> = [],
     val deprecated: Boolean = false,
-    val deprecatedReason: String = ""
+    val deprecatedReason: String = "",
+    val defaultValue :String = ""
 )
 
 /**
@@ -58,7 +59,8 @@ annotation class NativeBlockProp(
 annotation class NativeBlockData(
     val description: String = "",
     val deprecated: Boolean = false,
-    val deprecatedReason: String = ""
+    val deprecatedReason: String = "",
+    val defaultValue :String = ""
 )
 
 /**

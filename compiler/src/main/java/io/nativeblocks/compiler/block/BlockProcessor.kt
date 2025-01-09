@@ -95,7 +95,6 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                     when (val annotation = annotations.first().shortName.asString()) {
                         NativeBlockProp::class.simpleName -> {
                             val propertyJson = param.getAnnotation(annotation).generatePropertyJson(
-                                resolver = resolver,
                                 param = param,
                                 kind = integrationJson.kind,
                                 filePath = param.containingFile?.filePath.orEmpty()

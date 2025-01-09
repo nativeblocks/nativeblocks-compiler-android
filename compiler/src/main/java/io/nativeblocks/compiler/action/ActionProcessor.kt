@@ -122,11 +122,10 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                         when (val annotation = annotations.first().shortName.asString()) {
                             NativeActionProp::class.simpleName -> {
                                 val propertyJson = param.getAnnotation(annotation).generatePropertyJson(
-                                    resolver = resolver,
-                                    param = param,
-                                    kind = integrationJson.kind,
-                                    filePath = param.containingFile?.filePath.orEmpty()
-                                )
+                                        param = param,
+                                        kind = integrationJson.kind,
+                                        filePath = param.containingFile?.filePath.orEmpty()
+                                    )
                                 properties.add(propertyJson)
                             }
 
@@ -145,7 +144,7 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                                 events.add(event)
                             }
                         }
-                    }else{
+                    } else {
                         val extraParam = param.getExtraParam()
                         if (extraParam.key == "actionProps" && extraParam.type == "io.nativeblocks.core.api.provider.action.ActionProps")
                             extraParams.add(extraParam)
