@@ -66,3 +66,9 @@ internal data class Slot(
     val deprecated: Boolean,
     val deprecatedReason: String,
 )
+
+@Serializable
+internal data class ExtraParam(
+    val key: String,
+    val type: String,
+)

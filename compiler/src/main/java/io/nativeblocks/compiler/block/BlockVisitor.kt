@@ -10,6 +10,7 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
 import io.nativeblocks.compiler.util.Diagnostic
@@ -26,6 +27,7 @@ internal class BlockVisitor(
     private val metaEvents: MutableList<Event>,
     private val metaData: MutableList<Data>,
     private val metaSlots: MutableList<Slot>,
+    private val extraParams: MutableList<ExtraParam>,
 ) : KSVisitorVoid() {
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
@@ -36,6 +38,7 @@ internal class BlockVisitor(
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
+        val importBlockString = ClassName("io.nativeblocks.core.util", "parseWithJsonPath")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
@@ -60,6 +63,10 @@ internal class BlockVisitor(
         metaData.forEach {
             func.addStatement("val ${it.key} = blockProps.variables?.get(data[\"${it.key}\"]?.value)")
         }
+        func.addComment("block data value")
+        metaData.forEach {
+            func.addStatement("val ${it.key}Value = ${dataTypeMapper(it)}")
+        }
         func.addComment("block properties")
         metaProperties.forEach {
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
@@ -77,8 +84,13 @@ internal class BlockVisitor(
         func.addCode(function.simpleName.asString()).addCode("(")
             .addCode(CodeBlock.builder().indent().build())
             .addStatement("")
+
+        extraParams.map {
+            func.addStatement("${it.key} = ${it.key},")
+        }
+
         metaData.map {
-            func.addStatement("${it.key} = ${dataTypeMapper(it)},")
+            func.addStatement("${it.key} = ${it.key}Value,")
         }
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
@@ -136,6 +148,7 @@ internal class BlockVisitor(
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
+            .addImport(importBlockString, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .addSuperinterface(importINativeBlock)
@@ -159,12 +172,12 @@ internal class BlockVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value ?: ${"\"\""}"""
-            "INT" -> """${dataItem.key}?.value?.toIntOrNull() ?: ${0}"""
-            "LONG" -> """${dataItem.key}?.value?.toLongOrNull() ?: ${0L}"""
-            "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
+            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy) ?: "" """
+            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toIntOrNull() ?: 0 """
+            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toLongOrNull() ?: 0L """
+            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toFloatOrNull() ?: 0.0F """
+            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toDoubleOrNull() ?: 0.0 """
+            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.lowercase()?.toBooleanStrictOrNull() ?: false """
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }

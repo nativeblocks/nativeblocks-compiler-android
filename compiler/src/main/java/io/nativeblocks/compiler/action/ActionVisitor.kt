@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
@@ -30,6 +31,7 @@ internal class ActionVisitor(
     private val metaProperties: MutableList<Property>,
     private val metaEvents: MutableList<Event>,
     private val metaData: MutableList<Data>,
+    private val extraParams: MutableList<ExtraParam>,
 ) : KSVisitorVoid() {
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -37,13 +39,18 @@ internal class ActionVisitor(
         val importActionProps = ClassName("io.nativeblocks.core.api.provider.action", "ActionProps")
         val importNativeBlockModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeBlockModel")
         val importNativeActionModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionModel")
-        val importNativeActionTriggerModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
-        val importNativeActionTriggerThen = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
-        val importNativeActionTriggerPropertyModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
-        val importNativeActionTriggerDataModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
+        val importNativeActionTriggerModel =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
+        val importNativeActionTriggerThen =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
+        val importNativeActionTriggerPropertyModel =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
+        val importNativeActionTriggerDataModel =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
+        val importActionString = ClassName("io.nativeblocks.core.util", "parseWithJsonPath")
 
         val func = FunSpec.builder("handle")
             .addModifiers(KModifier.OVERRIDE)
@@ -61,6 +68,12 @@ internal class ActionVisitor(
         metaData.forEach {
             func.addStatement("val ${it.key} = actionProps.variables?.get(data[\"${it.key}\"]?.value)")
         }
+
+        func.addComment("action trigger data value")
+        metaData.forEach {
+            func.addStatement("val ${it.key}Value = ${dataTypeMapper(it)}")
+        }
+
         func.addComment("action trigger properties")
         metaProperties.forEach {
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
@@ -73,9 +86,14 @@ internal class ActionVisitor(
             .addCode(klass.simpleName.asString() + "." + functionParameter.simpleName.asString() + "(")
             .addStatement("")
 
-        metaData.map {
-            func.addStatement("${it.key} = ${dataTypeMapper(it)},")
+        extraParams.map {
+            func.addStatement("${it.key} = ${it.key},")
         }
+
+        metaData.map {
+            func.addStatement("${it.key} = ${it.key}Value,")
+        }
+
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
         }
@@ -135,6 +153,7 @@ internal class ActionVisitor(
             .addImport(importNativeActionTriggerDataModel, "")
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
+            .addImport(importActionString, "")
             .addImport(importNativeblocksManager, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
@@ -166,12 +185,12 @@ internal class ActionVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value ?: """""
-            "INT" -> """${dataItem.key}?.value?.toIntOrNull() ?: ${0}"""
-            "LONG" -> """${dataItem.key}?.value?.toLongOrNull() ?: ${0L}"""
-            "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
+            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex) ?: """""
+            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toIntOrNull() ?: ${0}"""
+            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toLongOrNull() ?: ${0L}"""
+            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toFloatOrNull() ?: ${0.0F}"""
+            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toDoubleOrNull() ?: ${0.0}"""
+            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }

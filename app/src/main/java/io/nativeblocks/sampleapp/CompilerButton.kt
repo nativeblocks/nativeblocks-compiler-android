@@ -23,18 +23,24 @@ import io.nativeblocks.compiler.type.NativeBlockProp
 import io.nativeblocks.compiler.type.NativeBlockSlot
 import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
+import io.nativeblocks.core.api.provider.block.BlockProps
 
 @NativeBlock(
-    name = "AI button",
+    name = "Compiler button",
     keyType = "COMPILER_AI_BUTTON",
     description = "This is a button",
-    version = 2
+    version = 4
 )
 @Composable
-fun AIButton(
+fun CompilerButton(
+    blockProps: BlockProps? = null,
     @NativeBlockData(
         description = "Button text"
     ) text: String,
+    @NativeBlockData(
+        description = "Button key",
+        deprecated = false
+    ) key: String,
     @NativeBlockProp(
         description = "Button size",
         valuePicker = NativeBlockValuePicker.DROPDOWN,
@@ -52,9 +58,7 @@ fun AIButton(
     @NativeBlockSlot(
         description = "Button trailing icon",
     ) onTrailingIcon: (@Composable (index: BlockIndex) -> Unit)? = null,
-    @NativeBlockEvent(
-        description = "Button on click",
-    ) onClick: () -> Unit,
+    @NativeBlockEvent(description = "Button on click") onClick: () -> Unit,
 ) {
     val padding = when (size) {
         "S" -> PaddingValues(4.dp)
@@ -89,7 +93,7 @@ fun AIButton(
 @Composable
 private fun XButtonPreview1() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "S", onLeadingIcon = {}, onTrailingIcon = {}) {
+        CompilerButton(text = "Hello", size = "S", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }
@@ -98,7 +102,7 @@ private fun XButtonPreview1() {
 @Composable
 private fun XButtonPreview2() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "M", onLeadingIcon = {}, onTrailingIcon = {}) {
+        CompilerButton(text = "Hello", size = "M", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }
@@ -107,7 +111,7 @@ private fun XButtonPreview2() {
 @Composable
 private fun XButtonPreview3() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "L", onLeadingIcon = {}, onTrailingIcon = {}) {
+        CompilerButton(text = "Hello", size = "L", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
         }
     }
 }

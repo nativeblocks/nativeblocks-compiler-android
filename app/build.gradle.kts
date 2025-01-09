@@ -66,6 +66,14 @@ ksp {
     arg("moduleName", "Demo")
 }
 
+nativeblocks {
+    endpoint = nativeblocksProps["endpoint"] as String
+    authToken = nativeblocksProps["authToken"] as String
+    organizationId = nativeblocksProps["organizationId"] as String
+    basePackageName = "io.nativeblocks.sampleapp"
+    moduleName = "Demo"
+}
+
 dependencies {
     implementation ("com.google.code.gson:gson:2.11.0")
     implementation("androidx.core:core-ktx:1.13.1")
@@ -74,9 +82,9 @@ dependencies {
     implementation("androidx.compose.animation:animation:1.7.4")
     implementation("androidx.compose.ui:ui-tooling:1.7.4")
     implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("io.nativeblocks:nativeblocks-foundation-android:1.0.0")
-    implementation("io.nativeblocks:nativeblocks-android:1.2.1")
+    implementation("io.nativeblocks:nativeblocks-android:1.2.2")
     implementation("io.nativeblocks:nativeblocks-wandkit-android:1.0.1")
+    implementation("io.nativeblocks:nativeblocks-foundation-android:1.0.0")
     implementation(project(":compiler"))
     ksp(project(":compiler"))
 }
