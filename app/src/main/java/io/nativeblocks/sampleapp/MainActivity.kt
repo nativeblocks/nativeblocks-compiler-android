@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         DemoActionProvider.provideActions(aIBot)
 
         NativeblocksManager.getInstance().liveKit()
-        NativeblocksManager.getInstance().provideTypeSerializer(Dp::class,DpNativeType())
+        NativeblocksManager.getInstance().provideTypeConverter(Dp::class, DpNativeType())
 
         setContent {
             NativeblocksFrame(
