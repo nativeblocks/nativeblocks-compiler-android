@@ -7,6 +7,7 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSValueParameter
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Integration
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
@@ -175,6 +176,16 @@ internal fun KSAnnotation.generateDataJson(param: KSValueParameter): Data {
         deprecatedReason = deprecatedReason,
     )
     return dataJson
+}
+
+internal fun KSValueParameter.getExtraParam(): ExtraParam {
+    val key = this.name?.asString().orEmpty()
+    val type = this.type.resolve().declaration.qualifiedName?.asString().orEmpty()
+    val extraParam = ExtraParam(
+        key = key,
+        type = type,
+    )
+    return extraParam
 }
 
 internal fun KSAnnotation.generateSlotJson(param: KSValueParameter): Slot {

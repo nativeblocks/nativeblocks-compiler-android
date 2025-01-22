@@ -24,3 +24,4 @@ sample.nativeblocks.properties
 
 *.gpg
 /*.gpg
+compiler/bin/
