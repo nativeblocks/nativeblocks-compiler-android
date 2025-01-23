@@ -34,6 +34,7 @@ annotation class NativeBlock(
  * @property valuePickerOptions Array of selectable options, if applicable.
  * @property deprecated Indicates if the property is deprecated.
  * @property deprecatedReason Reason for deprecation, if applicable.
+ * @property defaultValue The default value for the property, if applicable.
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockProp(
@@ -54,6 +55,7 @@ annotation class NativeBlockProp(
  * @property description A brief description of the data binding.
  * @property deprecated Indicates if the data binding is deprecated.
  * @property deprecatedReason Reason for deprecation, if applicable.
+ * @property defaultValue The default value for the data binding, if applicable.
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeBlockData(
@@ -115,6 +117,7 @@ annotation class NativeBlockValuePickerPosition(
 
 /**
  * Enum representing the types of value pickers available for Native Block properties.
+ * Defines the UI components used to input or select values for properties.
  */
 enum class NativeBlockValuePicker {
     TEXT_INPUT,
