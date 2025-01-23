@@ -26,7 +26,7 @@ import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
 import io.nativeblocks.compiler.type.NativeBlockValuePickerPosition
 import io.nativeblocks.core.util.json.NativeJsonPath
-import io.nativeblocks.core.util.widthAndHeight
+import io.nativeblocks.foundation.util.widthAndHeight
 
 @NativeBlock(
     name = "Compiler list",
