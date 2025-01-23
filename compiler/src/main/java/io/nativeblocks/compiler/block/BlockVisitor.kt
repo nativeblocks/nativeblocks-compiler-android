@@ -42,6 +42,7 @@ internal class BlockVisitor(
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
         val importBlockString = ClassName("io.nativeblocks.core.util", "parseWithJsonPath")
+        val importBlockProvideSlot = ClassName("io.nativeblocks.core.util", "blockProvideSlot")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
@@ -76,7 +77,7 @@ internal class BlockVisitor(
         }
         func.addComment("block slots")
         metaSlots.forEach {
-            func.addStatement("val ${it.slot} = slots[\"${it.slot}\"]")
+            func.addStatement("val ${it.slot} = blockProvideSlot(blockProps, slots, \"${it.slot}\") ")
         }
         func.addComment("block events")
         metaEvents.forEach {
@@ -130,24 +131,42 @@ internal class BlockVisitor(
         }
         metaEvents.forEach {
             val eventArg = function.parameters.find { arg -> arg.name?.asString() == it.event }
-            val eventArgSize = eventArg?.type?.resolve()?.arguments?.size ?: 0
+            val type = eventArg?.type?.resolve()
+            val eventArgSize = type?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
             items.removeLast()
 
-            func.addStatement("${it.event} = { ${items.joinToString()} ->")
-            it.dataBinding.forEachIndexed { index, dataBound ->
-                func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
-                    .beginControlFlow("if (${dataBound}Updated != null)")
-                    .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
-                    .endControlFlow()
+            if (type?.isMarkedNullable == true) {
+                func.beginControlFlow("${it.event} = if (${it.event} != null)")
+                func.addStatement("{ ${items.joinToString()} ->")
+                it.dataBinding.forEachIndexed { index, dataBound ->
+                    func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
+                        .beginControlFlow("if (${dataBound}Updated != null)")
+                        .addStatement("blockProps.onVariableChange.invoke(${dataBound}Updated)")
+                        .endControlFlow()
+                }
+                func.addStatement("${it.event}.invoke()")
+                func.addStatement("}")
+                func.addStatement("}else {")
+                func.addStatement("null")
+                func.addStatement("},")
+            } else {
+                func.addStatement("${it.event} = { ${items.joinToString()} ->")
+                it.dataBinding.forEachIndexed { index, dataBound ->
+                    func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
+                        .beginControlFlow("if (${dataBound}Updated != null)")
+                        .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
+                        .endControlFlow()
+                }
+                func.addStatement("${it.event}?.invoke()")
+                func.addStatement("},")
             }
-            func.addStatement("${it.event}?.invoke()")
-            func.addStatement("},")
         }
         func.addCode(")")
 
         val blockClass = FileSpec.builder(packageName, fileName)
             .addImport(importBlockFunction, "")
+            .addImport(importBlockProvideSlot, "")
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
