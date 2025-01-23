@@ -84,7 +84,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.nativeblocks:nativeblocks-android:1.2.2")
     implementation("io.nativeblocks:nativeblocks-wandkit-android:1.0.1")
-    implementation("io.nativeblocks:nativeblocks-foundation-android:1.0.0")
+    implementation("io.nativeblocks:nativeblocks-foundation-android:1.0.1")
     implementation(project(":compiler"))
     ksp(project(":compiler"))
 }
