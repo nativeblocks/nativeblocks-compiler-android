@@ -21,7 +21,7 @@ class CompilerAIChatBot {
         val actionProps: ActionProps? = null,
         @NativeActionProp val apiKey: String,
         @NativeActionProp(defaultValue = "None") val aiModelId: String,
-        @NativeActionProp(defaultValue = """{"type":"ChatGbt"}""") val config: Config? = Config(type = "ChatGbt"),
+        @NativeActionProp(defaultValue = """{"type":"ChatGPT"}""") val config: Config? = Config(type = "ChatGPT"),
         @NativeActionData val userPrompt: String,
         @NativeActionData(defaultValue = "[]") val result: String,
         @NativeActionData val errorMessage: String,
