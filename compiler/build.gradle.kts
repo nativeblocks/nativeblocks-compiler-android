@@ -59,7 +59,7 @@ dependencies {
 object ModuleInfo {
     const val GROUP_ID = "io.nativeblocks"
     const val ARTIFACT_ID = "nativeblocks-compiler-android"
-    const val VERSION = "1.1.1"
+    const val VERSION = "1.2.0"
     const val DESCRIPTION = "Nativeblocks compiler SDK for Android"
     const val URL = "https://nativeblocks.io"
 }
