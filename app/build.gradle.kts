@@ -7,6 +7,9 @@ plugins {
     id("com.google.devtools.ksp")
     id("io.nativeblocks.nativeblocks-gradle-plugin").version("1.1.1")
 }
+val nativeblocksProps = Properties().apply {
+    load(FileInputStream(File(rootProject.rootDir, "sample.nativeblocks.properties")))
+}
 
 android {
     namespace = "io.nativeblocks.sampleapp"
@@ -50,8 +53,12 @@ android {
     }
 }
 
-val nativeblocksProps = Properties().apply {
-    load(FileInputStream(File(rootProject.rootDir, "sample.nativeblocks.properties")))
+nativeblocks {
+    endpoint = nativeblocksProps["endpoint"] as String
+    authToken = nativeblocksProps["authToken"] as String
+    organizationId = nativeblocksProps["organizationId"] as String
+    basePackageName = "io.nativeblocks.sampleapp"
+    moduleName = "Demo"
 }
 
 ksp {
@@ -68,6 +75,7 @@ nativeblocks {
 }
 
 dependencies {
+    implementation ("com.google.code.gson:gson:2.11.0")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.material:material:1.7.4")
@@ -76,7 +84,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.nativeblocks:nativeblocks-android:1.2.2")
     implementation("io.nativeblocks:nativeblocks-wandkit-android:1.0.1")
-    implementation("io.nativeblocks:nativeblocks-foundation-android:1.0.0")
+    implementation("io.nativeblocks:nativeblocks-foundation-android:1.0.1")
     implementation(project(":compiler"))
     ksp(project(":compiler"))
 }

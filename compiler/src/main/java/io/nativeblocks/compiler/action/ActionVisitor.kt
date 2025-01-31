@@ -18,6 +18,7 @@ import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.camelcase
 import io.nativeblocks.compiler.util.plusAssign
+import io.nativeblocks.compiler.util.stringify
 import java.io.OutputStream
 
 internal class ActionVisitor(
@@ -48,6 +49,7 @@ internal class ActionVisitor(
         val importNativeActionTriggerDataModel =
             ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
+        val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
         val importActionString = ClassName("io.nativeblocks.core.util", "parseWithJsonPath")
 
@@ -153,6 +155,7 @@ internal class ActionVisitor(
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
             .addImport(importActionString, "")
+            .addImport(importNativeblocksManager, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .primaryConstructor(flux)
@@ -170,25 +173,25 @@ internal class ActionVisitor(
     }
 
     private fun propTypeMapper(prop: Property): Any {
-        return when (prop.type) {
-            "STRING" -> """properties["${prop.key}"]?.value ?: "${prop.value}""""
-            "INT" -> """properties["${prop.key}"]?.value?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
-            "LONG" -> """properties["${prop.key}"]?.value?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
+        return when (prop.typeClass) {
+            "kotlin.String" -> """properties["${prop.key}"]?.value ?: "${prop.value.stringify()}""""
+            "kotlin.Int" -> """properties["${prop.key}"]?.value?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
+            "kotlin.Long" -> """properties["${prop.key}"]?.value?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
+            "kotlin.Float" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
+            "kotlin.Double" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
+            "kotlin.Boolean" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
+            else -> """NativeblocksManager.getInstance().getTypeConverter(${prop.typeClass}::class).fromString(properties["${prop.key}"]?.value ?: "${prop.value.stringify()}")"""
         }
     }
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex) ?: """""
-            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toIntOrNull() ?: ${0}"""
-            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toLongOrNull() ?: ${0L}"""
-            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toFloatOrNull() ?: ${0.0F}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toDoubleOrNull() ?: ${0.0}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
+            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
+            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }

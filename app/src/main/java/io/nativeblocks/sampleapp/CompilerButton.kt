@@ -11,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -26,20 +27,24 @@ import io.nativeblocks.core.api.provider.block.BlockProps
 
 @NativeBlock(
     name = "Compiler button",
-    keyType = "COMPILER_BUTTON",
+    keyType = "COMPILER_AI_BUTTON",
     description = "This is a button",
-    version = 4,
+    version = 4
 )
 @Composable
 fun CompilerButton(
     blockProps: BlockProps? = null,
     @NativeBlockData(
-        description = "Button text",
-        deprecated = false
+        description = "Button text"
     ) text: String,
     @NativeBlockData(
+        description = "Button text",
+        defaultValue = "true"
+    ) enabled: Boolean = false,
+    @NativeBlockData(
         description = "Button key",
-        deprecated = false
+        deprecated = false,
+        defaultValue = "key"
     ) key: String,
     @NativeBlockProp(
         description = "Button size",
@@ -48,8 +53,12 @@ fun CompilerButton(
             NativeBlockValuePickerOption("S", "Small"),
             NativeBlockValuePickerOption("M", "Medium"),
             NativeBlockValuePickerOption("L", "Large")
-        ]
+        ], defaultValue = "S"
     ) size: String = "S",
+    @NativeBlockProp(description = "Button padding", defaultValue = "1")
+    padding: Dp? = 1.dp,
+    @NativeBlockProp(description = "Button margin", defaultValue = "1")
+    margin: Dp = 1.dp,
     @NativeBlockSlot(
         description = "Button leading icon",
     ) onLeadingIcon: @Composable (index: BlockIndex) -> Unit,
@@ -91,7 +100,12 @@ fun CompilerButton(
 @Composable
 private fun XButtonPreview1() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CompilerButton(text = "Hello", size = "S", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
+        CompilerButton(
+            text = "Hello",
+            size = "S",
+            key = "",
+            onLeadingIcon = {},
+            onTrailingIcon = {}) {
         }
     }
 }
@@ -100,7 +114,12 @@ private fun XButtonPreview1() {
 @Composable
 private fun XButtonPreview2() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CompilerButton(text = "Hello", size = "M", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
+        CompilerButton(
+            text = "Hello",
+            size = "M",
+            key = "",
+            onLeadingIcon = {},
+            onTrailingIcon = {}) {
         }
     }
 }
@@ -109,7 +128,12 @@ private fun XButtonPreview2() {
 @Composable
 private fun XButtonPreview3() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CompilerButton(text = "Hello", size = "L", key = "", onLeadingIcon = {}, onTrailingIcon = {}) {
+        CompilerButton(
+            text = "Hello",
+            size = "L",
+            key = "",
+            onLeadingIcon = {},
+            onTrailingIcon = {}) {
         }
     }
 }

@@ -41,6 +41,7 @@ annotation class NativeActionFunction
  * @property valuePickerOptions Array of selectable options, if applicable.
  * @property deprecated Indicates if the property is deprecated.
  * @property deprecatedReason Reason for deprecation, if applicable.
+ * @property defaultValue The default value for the property, if applicable.
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeActionProp(
@@ -51,7 +52,8 @@ annotation class NativeActionProp(
     ),
     val valuePickerOptions: Array<NativeActionValuePickerOption> = [],
     val deprecated: Boolean = false,
-    val deprecatedReason: String = ""
+    val deprecatedReason: String = "",
+    val defaultValue :String = ""
 )
 
 /**
@@ -60,12 +62,14 @@ annotation class NativeActionProp(
  * @property description A brief description of the data binding.
  * @property deprecated Indicates if the data binding is deprecated.
  * @property deprecatedReason Reason for deprecation, if applicable.
+ * @property defaultValue The default value for the data binding, if applicable.
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class NativeActionData(
     val description: String = "",
     val deprecated: Boolean = false,
-    val deprecatedReason: String = ""
+    val deprecatedReason: String = "",
+    val defaultValue :String = ""
 )
 
 /**
@@ -118,6 +122,7 @@ annotation class NativeActionValuePickerPosition(
 
 /**
  * Enum representing the types of value pickers available for Native Action properties.
+ * Defines the UI components used to input or select values for properties.
  */
 enum class NativeActionValuePicker {
     TEXT_INPUT,
