@@ -41,7 +41,7 @@ internal class BlockVisitor(
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
-        val importBlockString = ClassName("io.nativeblocks.core.util", "parseWithJsonPath")
+        val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.util", "blockHandleVariableValue")
         val importBlockProvideSlot = ClassName("io.nativeblocks.core.util", "blockProvideSlot")
 
         val func = FunSpec.builder("BlockView")
@@ -170,7 +170,7 @@ internal class BlockVisitor(
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
-            .addImport(importBlockString, "")
+            .addImport(importBlockHandleVariableValue, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .addSuperinterface(importINativeBlock)
@@ -194,12 +194,12 @@ internal class BlockVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy) ?: "${dataItem.value.stringify()}""""
-            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
-            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }} """
-            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(blockProps.variables,blockProps.hierarchy)?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }} """
+            "STRING" -> """blockHandleVariableValue(blockProps,${dataItem.key}) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }} """
+            "BOOLEAN" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }} """
             else -> throw Diagnostic.exceptionDispatcher(
                 DiagnosticType.MetaCustomType(
                     dataItem.key,
