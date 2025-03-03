@@ -14,10 +14,6 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-kotlin {
-    jvmToolchain(17)
-}
-
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     coordinates(ModuleInfo.GROUP_ID, ModuleInfo.ARTIFACT_ID, ModuleInfo.VERSION)
