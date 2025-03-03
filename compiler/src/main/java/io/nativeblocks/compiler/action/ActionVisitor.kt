@@ -51,7 +51,7 @@ internal class ActionVisitor(
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
-        val importActionString = ClassName("io.nativeblocks.core.util", "parseWithJsonPath")
+        val importActionHandleVariableValue = ClassName("io.nativeblocks.core.util", "actionHandleVariableValue")
 
         val func = FunSpec.builder("handle")
             .addModifiers(KModifier.OVERRIDE)
@@ -154,7 +154,7 @@ internal class ActionVisitor(
             .addImport(importNativeActionTriggerDataModel, "")
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
-            .addImport(importActionString, "")
+            .addImport(importActionHandleVariableValue, "")
             .addImport(importNativeblocksManager, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
@@ -185,13 +185,13 @@ internal class ActionVisitor(
     }
 
     private fun dataTypeMapper(dataItem: Data): Any {
-        return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex) ?: "${dataItem.value.stringify()}""""
-            "INT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
-            "LONG" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.parseWithJsonPath(actionProps.variables, actionProps.listItemIndex)?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
+        return when (dataItem.type) {//actionHandleVariableValue(actionProps,${dataItem.key}) ?: ""
+            "STRING" -> """actionHandleVariableValue(actionProps,${dataItem.key}) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
+            "BOOLEAN" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
