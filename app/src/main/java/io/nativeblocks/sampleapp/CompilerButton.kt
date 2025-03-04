@@ -11,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -22,21 +23,29 @@ import io.nativeblocks.compiler.type.NativeBlockProp
 import io.nativeblocks.compiler.type.NativeBlockSlot
 import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
+import io.nativeblocks.core.api.provider.block.BlockProps
 
 @NativeBlock(
-    name = "AI button",
-    keyType = "AI_BUTTON",
+    name = "Compiler button",
+    keyType = "COMPILER_AI_BUTTON",
     description = "This is a button",
-    version = 1,
-    deprecated = true,
-    deprecatedReason = ""
+    version = 4
 )
 @Composable
-fun AIButton(
+fun CompilerButton(
+    blockProps: BlockProps? = null,
+    @NativeBlockData(
+        description = "Button text"
+    ) text: String,
     @NativeBlockData(
         description = "Button text",
-        deprecated = true
-    ) text: String,
+        defaultValue = "true"
+    ) enabled: Boolean = false,
+    @NativeBlockData(
+        description = "Button key",
+        deprecated = false,
+        defaultValue = "key"
+    ) key: String,
     @NativeBlockProp(
         description = "Button size",
         valuePicker = NativeBlockValuePicker.DROPDOWN,
@@ -44,17 +53,19 @@ fun AIButton(
             NativeBlockValuePickerOption("S", "Small"),
             NativeBlockValuePickerOption("M", "Medium"),
             NativeBlockValuePickerOption("L", "Large")
-        ]
+        ], defaultValue = "S"
     ) size: String = "S",
+    @NativeBlockProp(description = "Button padding", defaultValue = "1")
+    padding: Dp? = 1.dp,
+    @NativeBlockProp(description = "Button margin", defaultValue = "1")
+    margin: Dp = 1.dp,
     @NativeBlockSlot(
         description = "Button leading icon",
     ) onLeadingIcon: @Composable (index: BlockIndex) -> Unit,
     @NativeBlockSlot(
         description = "Button trailing icon",
     ) onTrailingIcon: (@Composable (index: BlockIndex) -> Unit)? = null,
-    @NativeBlockEvent(
-        description = "Button on click",
-    ) onClick: () -> Unit,
+    @NativeBlockEvent(description = "Button on click") onClick: () -> Unit,
 ) {
     val padding = when (size) {
         "S" -> PaddingValues(4.dp)
@@ -89,7 +100,12 @@ fun AIButton(
 @Composable
 private fun XButtonPreview1() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "S", {}, {}) {
+        CompilerButton(
+            text = "Hello",
+            size = "S",
+            key = "",
+            onLeadingIcon = {},
+            onTrailingIcon = {}) {
         }
     }
 }
@@ -98,7 +114,12 @@ private fun XButtonPreview1() {
 @Composable
 private fun XButtonPreview2() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "M", {}, {}) {
+        CompilerButton(
+            text = "Hello",
+            size = "M",
+            key = "",
+            onLeadingIcon = {},
+            onTrailingIcon = {}) {
         }
     }
 }
@@ -107,7 +128,12 @@ private fun XButtonPreview2() {
 @Composable
 private fun XButtonPreview3() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        AIButton(text = "Hello", size = "L", {}, {}) {
+        CompilerButton(
+            text = "Hello",
+            size = "L",
+            key = "",
+            onLeadingIcon = {},
+            onTrailingIcon = {}) {
         }
     }
 }

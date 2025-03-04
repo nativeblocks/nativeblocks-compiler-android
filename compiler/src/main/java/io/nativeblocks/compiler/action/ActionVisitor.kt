@@ -12,11 +12,13 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.camelcase
 import io.nativeblocks.compiler.util.plusAssign
+import io.nativeblocks.compiler.util.stringify
 import java.io.OutputStream
 
 internal class ActionVisitor(
@@ -30,6 +32,7 @@ internal class ActionVisitor(
     private val metaProperties: MutableList<Property>,
     private val metaEvents: MutableList<Event>,
     private val metaData: MutableList<Data>,
+    private val extraParams: MutableList<ExtraParam>,
 ) : KSVisitorVoid() {
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
@@ -37,12 +40,18 @@ internal class ActionVisitor(
         val importActionProps = ClassName("io.nativeblocks.core.api.provider.action", "ActionProps")
         val importNativeBlockModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeBlockModel")
         val importNativeActionModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionModel")
-        val importNativeActionTriggerModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
-        val importNativeActionTriggerThen = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
-        val importNativeActionTriggerPropertyModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
-        val importNativeActionTriggerDataModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
+        val importNativeActionTriggerModel =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
+        val importNativeActionTriggerThen =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
+        val importNativeActionTriggerPropertyModel =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
+        val importNativeActionTriggerDataModel =
+            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
+        val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
+        val importActionHandleVariableValue = ClassName("io.nativeblocks.core.util", "actionHandleVariableValue")
 
         val func = FunSpec.builder("handle")
             .addModifiers(KModifier.OVERRIDE)
@@ -60,6 +69,12 @@ internal class ActionVisitor(
         metaData.forEach {
             func.addStatement("val ${it.key} = actionProps.variables?.get(data[\"${it.key}\"]?.value)")
         }
+
+        func.addComment("action trigger data value")
+        metaData.forEach {
+            func.addStatement("val ${it.key}Value = ${dataTypeMapper(it)}")
+        }
+
         func.addComment("action trigger properties")
         metaProperties.forEach {
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
@@ -72,9 +87,14 @@ internal class ActionVisitor(
             .addCode(klass.simpleName.asString() + "." + functionParameter.simpleName.asString() + "(")
             .addStatement("")
 
-        metaData.map {
-            func.addStatement("${it.key} = ${dataTypeMapper(it)},")
+        extraParams.map {
+            func.addStatement("${it.key} = ${it.key},")
         }
+
+        metaData.map {
+            func.addStatement("${it.key} = ${it.key}Value,")
+        }
+
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
         }
@@ -134,6 +154,8 @@ internal class ActionVisitor(
             .addImport(importNativeActionTriggerDataModel, "")
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
+            .addImport(importActionHandleVariableValue, "")
+            .addImport(importNativeblocksManager, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .primaryConstructor(flux)
@@ -151,25 +173,25 @@ internal class ActionVisitor(
     }
 
     private fun propTypeMapper(prop: Property): Any {
-        return when (prop.type) {
-            "STRING" -> """properties["${prop.key}"]?.value ?: "${prop.value}""""
-            "INT" -> """properties["${prop.key}"]?.value?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
-            "LONG" -> """properties["${prop.key}"]?.value?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
+        return when (prop.typeClass) {
+            "kotlin.String" -> """properties["${prop.key}"]?.value ?: "${prop.value.stringify()}""""
+            "kotlin.Int" -> """properties["${prop.key}"]?.value?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
+            "kotlin.Long" -> """properties["${prop.key}"]?.value?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
+            "kotlin.Float" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
+            "kotlin.Double" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
+            "kotlin.Boolean" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
+            else -> """NativeblocksManager.getInstance().getTypeConverter(${prop.typeClass}::class).fromString(properties["${prop.key}"]?.value ?: "${prop.value.stringify()}")"""
         }
     }
 
     private fun dataTypeMapper(dataItem: Data): Any {
-        return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value ?: """""
-            "INT" -> """${dataItem.key}?.value?.toIntOrNull() ?: ${0}"""
-            "LONG" -> """${dataItem.key}?.value?.toLongOrNull() ?: ${0L}"""
-            "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
+        return when (dataItem.type) {//actionHandleVariableValue(actionProps,${dataItem.key}) ?: ""
+            "STRING" -> """actionHandleVariableValue(actionProps,${dataItem.key}) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
+            "BOOLEAN" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }

@@ -10,11 +10,13 @@ import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
 import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.plusAssign
+import io.nativeblocks.compiler.util.stringify
 import java.io.OutputStream
 
 internal class BlockVisitor(
@@ -26,15 +28,21 @@ internal class BlockVisitor(
     private val metaEvents: MutableList<Event>,
     private val metaData: MutableList<Data>,
     private val metaSlots: MutableList<Slot>,
+    private val extraParams: MutableList<ExtraParam>,
 ) : KSVisitorVoid() {
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
         val importComposable = ClassName("androidx.compose.runtime", "Composable")
         val importBlockProps = ClassName("io.nativeblocks.core.api.provider.block", "BlockProps")
-        val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
-        val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
+        val importINativeBlock =
+            ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
+        val importBlockFindWindowSizeClass =
+            ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
+        val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
+        val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.util", "blockHandleVariableValue")
+        val importBlockProvideSlot = ClassName("io.nativeblocks.core.util", "blockProvideSlot")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
@@ -59,13 +67,17 @@ internal class BlockVisitor(
         metaData.forEach {
             func.addStatement("val ${it.key} = blockProps.variables?.get(data[\"${it.key}\"]?.value)")
         }
+        func.addComment("block data value")
+        metaData.forEach {
+            func.addStatement("val ${it.key}Value = ${dataTypeMapper(it)}")
+        }
         func.addComment("block properties")
         metaProperties.forEach {
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
         }
         func.addComment("block slots")
         metaSlots.forEach {
-            func.addStatement("val ${it.slot} = slots[\"${it.slot}\"]")
+            func.addStatement("val ${it.slot} = blockProvideSlot(blockProps, slots, \"${it.slot}\") ")
         }
         func.addComment("block events")
         metaEvents.forEach {
@@ -76,8 +88,13 @@ internal class BlockVisitor(
         func.addCode(function.simpleName.asString()).addCode("(")
             .addCode(CodeBlock.builder().indent().build())
             .addStatement("")
+
+        extraParams.map {
+            func.addStatement("${it.key} = ${it.key},")
+        }
+
         metaData.map {
-            func.addStatement("${it.key} = ${dataTypeMapper(it)},")
+            func.addStatement("${it.key} = ${it.key}Value,")
         }
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
@@ -114,26 +131,46 @@ internal class BlockVisitor(
         }
         metaEvents.forEach {
             val eventArg = function.parameters.find { arg -> arg.name?.asString() == it.event }
-            val eventArgSize = eventArg?.type?.resolve()?.arguments?.size ?: 0
+            val type = eventArg?.type?.resolve()
+            val eventArgSize = type?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
             items.removeLast()
 
-            func.addStatement("${it.event} = { ${items.joinToString()} ->")
-            it.dataBinding.forEachIndexed { index, dataBound ->
-                func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
-                    .beginControlFlow("if (${dataBound}Updated != null)")
-                    .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
-                    .endControlFlow()
+            if (type?.isMarkedNullable == true) {
+                func.beginControlFlow("${it.event} = if (${it.event} != null)")
+                func.addStatement("{ ${items.joinToString()} ->")
+                it.dataBinding.forEachIndexed { index, dataBound ->
+                    func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
+                        .beginControlFlow("if (${dataBound}Updated != null)")
+                        .addStatement("blockProps.onVariableChange.invoke(${dataBound}Updated)")
+                        .endControlFlow()
+                }
+                func.addStatement("${it.event}.invoke()")
+                func.addStatement("}")
+                func.addStatement("}else {")
+                func.addStatement("null")
+                func.addStatement("},")
+            } else {
+                func.addStatement("${it.event} = { ${items.joinToString()} ->")
+                it.dataBinding.forEachIndexed { index, dataBound ->
+                    func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
+                        .beginControlFlow("if (${dataBound}Updated != null)")
+                        .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
+                        .endControlFlow()
+                }
+                func.addStatement("${it.event}?.invoke()")
+                func.addStatement("},")
             }
-            func.addStatement("${it.event}?.invoke()")
-            func.addStatement("},")
         }
         func.addCode(")")
 
         val blockClass = FileSpec.builder(packageName, fileName)
             .addImport(importBlockFunction, "")
+            .addImport(importBlockProvideSlot, "")
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
+            .addImport(importNativeblocksManager, "")
+            .addImport(importBlockHandleVariableValue, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .addSuperinterface(importINativeBlock)
@@ -144,26 +181,31 @@ internal class BlockVisitor(
     }
 
     private fun propTypeMapper(prop: Property): Any {
-        return when (prop.type) {
-            "STRING" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.ifEmpty { "" }}" """
-            "INT" -> """findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
-            "LONG" -> """findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(prop.key, prop.type))
+        return when (prop.typeClass) {
+            "kotlin.String" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}""""
+            "kotlin.Int" -> """findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
+            "kotlin.Long" -> """findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
+            "kotlin.Float" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
+            "kotlin.Double" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
+            "kotlin.Boolean" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
+            else -> """NativeblocksManager.getInstance().getTypeConverter(${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}" ))"""
         }
     }
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """${dataItem.key}?.value ?: ${"\"\""}"""
-            "INT" -> """${dataItem.key}?.value?.toIntOrNull() ?: ${0}"""
-            "LONG" -> """${dataItem.key}?.value?.toLongOrNull() ?: ${0L}"""
-            "FLOAT" -> """${dataItem.key}?.value?.toFloatOrNull() ?: ${0.0F}"""
-            "DOUBLE" -> """${dataItem.key}?.value?.toDoubleOrNull() ?: ${0.0}"""
-            "BOOLEAN" -> """${dataItem.key}?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${false}"""
-            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
+            "STRING" -> """blockHandleVariableValue(blockProps,${dataItem.key}) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }} """
+            "BOOLEAN" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }} """
+            else -> throw Diagnostic.exceptionDispatcher(
+                DiagnosticType.MetaCustomType(
+                    dataItem.key,
+                    dataItem.type
+                )
+            )
         }
     }
 }

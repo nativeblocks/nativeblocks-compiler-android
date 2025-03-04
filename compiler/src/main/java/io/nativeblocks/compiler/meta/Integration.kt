@@ -26,6 +26,7 @@ internal data class Data(
     val description: String,
     val deprecated: Boolean,
     val deprecatedReason: String,
+    @Transient val value: String = ""
 )
 
 @Serializable
@@ -39,6 +40,7 @@ internal data class Property(
     val valuePicker: String,
     val valuePickerGroup: String,
     val valuePickerOptions: String,
+    @Transient val typeClass: String = ""
 )
 
 @Serializable
@@ -64,4 +66,10 @@ internal data class Slot(
     val description: String,
     val deprecated: Boolean,
     val deprecatedReason: String,
+)
+
+@Serializable
+internal data class ExtraParam(
+    val key: String,
+    val type: String,
 )

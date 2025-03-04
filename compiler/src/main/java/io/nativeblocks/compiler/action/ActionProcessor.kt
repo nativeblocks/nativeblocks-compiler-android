@@ -16,8 +16,10 @@ import io.nativeblocks.compiler.generateDataJson
 import io.nativeblocks.compiler.generateEventJson
 import io.nativeblocks.compiler.generateIntegrationJson
 import io.nativeblocks.compiler.generatePropertyJson
+import io.nativeblocks.compiler.getExtraParam
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.type.NativeAction
 import io.nativeblocks.compiler.type.NativeActionData
@@ -81,6 +83,7 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
             val properties = mutableListOf<Property>()
             val data = mutableListOf<Data>()
             val events = mutableListOf<Event>()
+            val extraParams = mutableListOf<ExtraParam>()
 
             val functions = klass.getAllFunctions().filter { function ->
                 function.annotations.filter {
@@ -119,11 +122,10 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                         when (val annotation = annotations.first().shortName.asString()) {
                             NativeActionProp::class.simpleName -> {
                                 val propertyJson = param.getAnnotation(annotation).generatePropertyJson(
-                                    resolver = resolver,
-                                    param = param,
-                                    kind = integrationJson.kind,
-                                    filePath = param.containingFile?.filePath.orEmpty()
-                                )
+                                        param = param,
+                                        kind = integrationJson.kind,
+                                        filePath = param.containingFile?.filePath.orEmpty()
+                                    )
                                 properties.add(propertyJson)
                             }
 
@@ -142,6 +144,10 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                                 events.add(event)
                             }
                         }
+                    } else {
+                        val extraParam = param.getExtraParam()
+                        if (extraParam.key == "actionProps" && extraParam.type == "io.nativeblocks.core.api.provider.action.ActionProps")
+                            extraParams.add(extraParam)
                     }
                 }
             }
@@ -193,7 +199,8 @@ internal class ActionProcessor(private val environment: SymbolProcessorEnvironme
                     klass = klass,
                     metaProperties = properties,
                     metaEvents = events,
-                    metaData = data
+                    metaData = data,
+                    extraParams = extraParams,
                 ), Unit
             )
             file.close()

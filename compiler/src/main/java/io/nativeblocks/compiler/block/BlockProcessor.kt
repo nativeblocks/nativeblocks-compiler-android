@@ -15,8 +15,10 @@ import io.nativeblocks.compiler.generateEventJson
 import io.nativeblocks.compiler.generateIntegrationJson
 import io.nativeblocks.compiler.generatePropertyJson
 import io.nativeblocks.compiler.generateSlotJson
+import io.nativeblocks.compiler.getExtraParam
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
 import io.nativeblocks.compiler.type.NativeBlock
@@ -80,6 +82,7 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
             val data = mutableListOf<Data>()
             val events = mutableListOf<Event>()
             val slots = mutableListOf<Slot>()
+            val extraParams = mutableListOf<ExtraParam>()
 
             function.parameters.forEach { param ->
                 // check the field has any annotation or not
@@ -92,7 +95,6 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                     when (val annotation = annotations.first().shortName.asString()) {
                         NativeBlockProp::class.simpleName -> {
                             val propertyJson = param.getAnnotation(annotation).generatePropertyJson(
-                                resolver = resolver,
                                 param = param,
                                 kind = integrationJson.kind,
                                 filePath = param.containingFile?.filePath.orEmpty()
@@ -122,6 +124,10 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                             slots.add(slotJson)
                         }
                     }
+                } else {
+                    val extraParam = param.getExtraParam()
+                    if (extraParam.key == "blockProps" && extraParam.type == "io.nativeblocks.core.api.provider.block.BlockProps")
+                        extraParams.add(extraParam)
                 }
             }
 
@@ -166,6 +172,7 @@ internal class BlockProcessor(private val environment: SymbolProcessorEnvironmen
                     metaEvents = events,
                     metaData = data,
                     metaSlots = slots,
+                    extraParams = extraParams,
                 ), Unit
             )
             file.close()

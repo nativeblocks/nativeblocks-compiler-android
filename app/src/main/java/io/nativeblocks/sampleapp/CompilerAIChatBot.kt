@@ -7,21 +7,23 @@ import io.nativeblocks.compiler.type.NativeActionFunction
 import io.nativeblocks.compiler.type.NativeActionParameter
 import io.nativeblocks.compiler.type.NativeActionProp
 import io.nativeblocks.compiler.type.Then
+import io.nativeblocks.core.api.provider.action.ActionProps
 
 @NativeAction(
-    keyType = "AI_CHAT_BOT",
-    name = "AI Chat bot",
+    keyType = "COMPILER_AI_CHAT_BOT",
+    name = "Compiler AI Chat bot",
     description = "This is a bot",
-    version = 2
+    version = 1
 )
-class AIChatBot {
-
+class CompilerAIChatBot {
     @NativeActionParameter
     data class Param(
+        val actionProps: ActionProps? = null,
         @NativeActionProp val apiKey: String,
-        @NativeActionProp val aiModelId: String,
+        @NativeActionProp(defaultValue = "None") val aiModelId: String,
+        @NativeActionProp(defaultValue = """{"type":"ChatGPT"}""") val config: Config? = Config(type = "ChatGPT"),
         @NativeActionData val userPrompt: String,
-        @NativeActionData val result: String,
+        @NativeActionData(defaultValue = "[]") val result: String,
         @NativeActionData val errorMessage: String,
         @NativeActionEvent(
             then = Then.SUCCESS,

@@ -2,11 +2,11 @@ package io.nativeblocks.compiler
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSValueParameter
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
+import io.nativeblocks.compiler.meta.ExtraParam
 import io.nativeblocks.compiler.meta.Integration
 import io.nativeblocks.compiler.meta.Property
 import io.nativeblocks.compiler.meta.Slot
@@ -17,7 +17,6 @@ import io.nativeblocks.compiler.type.Then
 import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.getArgument
-import io.nativeblocks.compiler.util.getDefaultValue
 import io.nativeblocks.compiler.util.onlyLettersAndUnderscore
 import io.nativeblocks.compiler.util.plusAssign
 import kotlinx.serialization.encodeToString
@@ -64,7 +63,6 @@ internal fun KSAnnotation.generateIntegrationJson(
 }
 
 internal fun KSAnnotation.generatePropertyJson(
-    resolver: Resolver,
     param: KSValueParameter,
     kind: String,
     filePath: String
@@ -76,6 +74,7 @@ internal fun KSAnnotation.generatePropertyJson(
     val valuePickerGroup = getArgument<Any>("valuePickerGroup")
     val valuePickerOptions = getArgument<ArrayList<*>>("valuePickerOptions")
     val key = param.name?.asString().orEmpty()
+    val defaultValue = getArgument<String>("defaultValue")
 
     var valuePickerGroupText = ""
     if (valuePickerGroup is KSAnnotation) {
@@ -92,7 +91,8 @@ internal fun KSAnnotation.generatePropertyJson(
             val texts = mutableListOf<String>()
             klass.arguments.forEach { argument ->
                 val id = if (argument.name?.asString() == "id") argument.value.toString() else ""
-                val text = if (argument.name?.asString() == "text") argument.value.toString() else ""
+                val text =
+                    if (argument.name?.asString() == "text") argument.value.toString() else ""
                 if (id.isNotEmpty()) ids.add(id)
                 if (text.isNotEmpty()) texts.add(text)
             }
@@ -102,32 +102,22 @@ internal fun KSAnnotation.generatePropertyJson(
         }
     }
 
-    val defaultValue = param.getDefaultValue(resolver)
-    var default = if (defaultValue?.imports?.isNotEmpty() == true) {
-        defaultValue.imports.first().substringBeforeLast('.') + "." + defaultValue.code
-    } else {
-        defaultValue?.code
-    }
-
-    val type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty())
-    if (type == "STRING") {
-        val p: Pattern = Pattern.compile("\"([^\"]*)\"")
-        val m: Matcher = p.matcher(default.orEmpty())
-        while (m.find()) {
-            default = m.group(1)
-        }
-    }
+    val typeClass = param.type.resolve().declaration.qualifiedName?.asString().orEmpty()
+    val type = if (isPrimitiveType(typeClass)) {
+        typeMapper(key, typeClass)
+    }else "STRING"
 
     val propertyJson = Property(
         key = key,
-        value = default.orEmpty(),
+        value = defaultValue,
         type = type,
         description = description,
         deprecated = deprecated,
         deprecatedReason = deprecatedReason,
         valuePicker = valuePickerMapper(filePath, key, valuePicker, kind),
         valuePickerGroup = valuePickerGroupText,
-        valuePickerOptions = Json.encodeToString(options)
+        valuePickerOptions = Json.encodeToString(options),
+        typeClass = typeClass
     )
     return propertyJson
 }
@@ -167,14 +157,29 @@ internal fun KSAnnotation.generateDataJson(param: KSValueParameter): Data {
     val deprecated = getArgument<Boolean>("deprecated")
     val deprecatedReason = getArgument<String>("deprecatedReason")
     val key = param.name?.asString().orEmpty()
+    val defaultValue = getArgument<String>("defaultValue")
     val dataJson = Data(
         key = key,
-        type = typeMapper(key, param.type.resolve().declaration.qualifiedName?.asString().orEmpty()),
+        type = typeMapper(
+            key,
+            param.type.resolve().declaration.qualifiedName?.asString().orEmpty()
+        ),
         description = description,
         deprecated = deprecated,
         deprecatedReason = deprecatedReason,
+        value = defaultValue
     )
     return dataJson
+}
+
+internal fun KSValueParameter.getExtraParam(): ExtraParam {
+    val key = this.name?.asString().orEmpty()
+    val type = this.type.resolve().declaration.qualifiedName?.asString().orEmpty()
+    val extraParam = ExtraParam(
+        key = key,
+        type = type,
+    )
+    return extraParam
 }
 
 internal fun KSAnnotation.generateSlotJson(param: KSValueParameter): Slot {
@@ -214,6 +219,16 @@ private fun thenMapper(then: String): String {
         "$cn.NEXT" -> "NEXT"
         "$cn.END" -> "END"
         else -> "END"
+    }
+}
+
+private fun isPrimitiveType(type: String): Boolean {
+    return when (type) {
+        "kotlin.String", "kotlin.Int",
+        "kotlin.Long", "kotlin.Boolean",
+        "kotlin.Float", "kotlin.Double" -> true
+
+        else -> false
     }
 }
 
