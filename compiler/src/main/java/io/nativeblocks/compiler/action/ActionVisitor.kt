@@ -56,6 +56,7 @@ internal class ActionVisitor(
         val func = FunSpec.builder("handle")
             .addModifiers(KModifier.OVERRIDE)
             .addParameter("actionProps", importActionProps)
+            .beginControlFlow("actionProps.coroutineScope.launch")
             .addComment("action meta fields")
             .addCode(
                 """
@@ -80,7 +81,6 @@ internal class ActionVisitor(
             func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
         }
 
-        func.beginControlFlow("actionProps.coroutineScope.launch")
         func.addCode(klass.simpleName.asString().camelcase() + "." + function.simpleName.asString())
             .addCode("(")
             .addCode(CodeBlock.builder().indent().build())
