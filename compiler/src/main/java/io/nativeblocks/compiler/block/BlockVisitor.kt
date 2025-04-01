@@ -40,15 +40,13 @@ internal class BlockVisitor(
         val importSetValue = ClassName("androidx.compose.runtime", "setValue")
 
         val importBlockProps = ClassName("io.nativeblocks.core.api.provider.block", "BlockProps")
-        val importINativeBlock =
-            ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
-        val importBlockFindWindowSizeClass =
-            ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
-        val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
+        val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
+        val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.api.util", "findWindowSizeClass")
+        val importBlockProvideEvent = ClassName("io.nativeblocks.core.api.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
-        val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.util", "blockHandleVariableValue")
-        val importBlockProvideSlot = ClassName("io.nativeblocks.core.util", "blockProvideSlot")
+        val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValue")
+        val importBlockProvideSlot = ClassName("io.nativeblocks.core.api.util", "blockProvideSlot")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
@@ -78,10 +76,10 @@ internal class BlockVisitor(
         metaData.forEach {
             func.addStatement(
                 """
-                LaunchedEffect(${it.key}) {
-                    ${it.key}Value = ${dataTypeMapper(it)}
-                }
-            """.trimIndent()
+                    LaunchedEffect(${it.key}) {
+                        ${it.key}Value = ${dataTypeMapper(it)}
+                    }
+                """.trimIndent()
             )
         }
         func.addComment("block properties")
@@ -147,7 +145,7 @@ internal class BlockVisitor(
             val type = eventArg?.type?.resolve()
             val eventArgSize = type?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
-            items.removeLast()
+            items.removeAt(items.lastIndex)
 
             if (type?.isMarkedNullable == true) {
                 func.beginControlFlow("${it.event} = if (${it.event} != null)")
@@ -218,12 +216,7 @@ internal class BlockVisitor(
             "FLOAT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
             "DOUBLE" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }} """
             "BOOLEAN" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }} """
-            else -> throw Diagnostic.exceptionDispatcher(
-                DiagnosticType.MetaCustomType(
-                    dataItem.key,
-                    dataItem.type
-                )
-            )
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
 

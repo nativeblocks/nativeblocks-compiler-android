@@ -51,7 +51,7 @@ internal class ActionVisitor(
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
-        val importActionHandleVariableValue = ClassName("io.nativeblocks.core.util", "actionHandleVariableValue")
+        val importActionHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "actionHandleVariableValue")
 
         val func = FunSpec.builder("handle")
             .addModifiers(KModifier.OVERRIDE)
@@ -104,7 +104,7 @@ internal class ActionVisitor(
             }
             val eventArgSize = eventArg?.type?.resolve()?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
-            items.removeLast()
+            items.removeAt(items.lastIndex)
 
             func.addStatement("${it.functionName} = { ${items.joinToString()} ->")
             it.dataBinding.forEachIndexed { index, dataBound ->
