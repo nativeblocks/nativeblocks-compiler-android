@@ -257,6 +257,7 @@ private fun valuePickerMapper(filePath: String, key: String, type: String, kind:
         "$cn.DROPDOWN" -> "dropdown"
         "$cn.COLOR_PICKER" -> "color-picker"
         "$cn.COMBOBOX_INPUT" -> "combobox-input"
+        "$cn.SCRIPT_AREA_INPUT" -> "script-area-input"
         else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomPicker(filePath, key))
     }
 }

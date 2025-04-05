@@ -33,16 +33,20 @@ internal class BlockVisitor(
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
         val importComposable = ClassName("androidx.compose.runtime", "Composable")
+        val importLaunchedEffect = ClassName("androidx.compose.runtime", "LaunchedEffect")
+        val importGetValue = ClassName("androidx.compose.runtime", "getValue")
+        val importMutableStateOf = ClassName("androidx.compose.runtime", "mutableStateOf")
+        val importRemember = ClassName("androidx.compose.runtime", "remember")
+        val importSetValue = ClassName("androidx.compose.runtime", "setValue")
+
         val importBlockProps = ClassName("io.nativeblocks.core.api.provider.block", "BlockProps")
-        val importINativeBlock =
-            ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
-        val importBlockFindWindowSizeClass =
-            ClassName("io.nativeblocks.core.util", "findWindowSizeClass")
-        val importBlockProvideEvent = ClassName("io.nativeblocks.core.util", "blockProvideEvent")
+        val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
+        val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.api.util", "findWindowSizeClass")
+        val importBlockProvideEvent = ClassName("io.nativeblocks.core.api.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
-        val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.util", "blockHandleVariableValue")
-        val importBlockProvideSlot = ClassName("io.nativeblocks.core.util", "blockProvideSlot")
+        val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValue")
+        val importBlockProvideSlot = ClassName("io.nativeblocks.core.api.util", "blockProvideSlot")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
@@ -65,11 +69,18 @@ internal class BlockVisitor(
         func.addStatement("")
         func.addComment("block data")
         metaData.forEach {
+            func.addStatement("var ${it.key}Value by remember { mutableStateOf(${dataDefaultValueMapper(it)}) }")
             func.addStatement("val ${it.key} = blockProps.variables?.get(data[\"${it.key}\"]?.value)")
         }
         func.addComment("block data value")
         metaData.forEach {
-            func.addStatement("val ${it.key}Value = ${dataTypeMapper(it)}")
+            func.addStatement(
+                """
+                    LaunchedEffect(${it.key}) {
+                        ${it.key}Value = ${dataTypeMapper(it)}
+                    }
+                """.trimIndent()
+            )
         }
         func.addComment("block properties")
         metaProperties.forEach {
@@ -134,7 +145,7 @@ internal class BlockVisitor(
             val type = eventArg?.type?.resolve()
             val eventArgSize = type?.arguments?.size ?: 0
             val items = MutableList(eventArgSize) { index -> "p$index" }
-            items.removeLast()
+            items.removeAt(items.lastIndex)
 
             if (type?.isMarkedNullable == true) {
                 func.beginControlFlow("${it.event} = if (${it.event} != null)")
@@ -171,6 +182,11 @@ internal class BlockVisitor(
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
             .addImport(importBlockHandleVariableValue, "")
+            .addImport(importLaunchedEffect, "")
+            .addImport(importGetValue, "")
+            .addImport(importMutableStateOf, "")
+            .addImport(importRemember, "")
+            .addImport(importSetValue, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
                     .addSuperinterface(importINativeBlock)
@@ -200,12 +216,19 @@ internal class BlockVisitor(
             "FLOAT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
             "DOUBLE" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }} """
             "BOOLEAN" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }} """
-            else -> throw Diagnostic.exceptionDispatcher(
-                DiagnosticType.MetaCustomType(
-                    dataItem.key,
-                    dataItem.type
-                )
-            )
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
+        }
+    }
+
+    private fun dataDefaultValueMapper(dataItem: Data): Any {
+        return when (dataItem.type) {
+            "STRING" -> """"${dataItem.value.stringify()}""""
+            "INT" -> """${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """${dataItem.value.ifEmpty { 0.0 }} """
+            "BOOLEAN" -> """${dataItem.value.ifEmpty { false }} """
+            else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
 }
