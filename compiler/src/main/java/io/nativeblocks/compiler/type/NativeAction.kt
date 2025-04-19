@@ -129,5 +129,6 @@ enum class NativeActionValuePicker {
     TEXT_AREA_INPUT,
     NUMBER_INPUT,
     DROPDOWN,
-    COLOR_PICKER;
+    COLOR_PICKER,
+    SCRIPT_AREA_INPUT;
 }
