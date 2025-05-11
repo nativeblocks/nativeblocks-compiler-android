@@ -32,6 +32,7 @@ internal fun KSAnnotation.generateIntegrationJson(
     val name = getArgument<String>("name")
     val description = getArgument<String>("description")
     val version = getArgument<Int>("version")
+    val versionName = getArgument<String>("versionName")
     val deprecated = getArgument<Boolean>("deprecated")
     val deprecatedReason = getArgument<String>("deprecatedReason")
 
@@ -49,6 +50,7 @@ internal fun KSAnnotation.generateIntegrationJson(
         name = name,
         description = description,
         version = version,
+        versionName = versionName,
         deprecated = deprecated,
         deprecatedReason = deprecatedReason,
         documentation = "",
