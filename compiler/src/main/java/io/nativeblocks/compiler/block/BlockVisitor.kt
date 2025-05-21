@@ -121,21 +121,35 @@ internal class BlockVisitor(
             val blockIndexes = type?.arguments?.filter { ksArg ->
                 ksArg.type?.resolve()?.declaration?.simpleName?.asString() == "BlockIndex"
             }
+            val blockScope = type?.arguments?.filter { ksArg ->
+                ksArg.type?.resolve()?.declaration?.simpleName?.asString() == "Any"
+            }
             if (blockIndexes.isNullOrEmpty()) {
                 throw Diagnostic.exceptionDispatcher(DiagnosticType.SlotComposableIndex)
             }
             if (type.isMarkedNullable) {
                 func.beginControlFlow("${it.slot} = if (${it.slot} != null)")
-                func.addStatement("@Composable { index -> ")
-                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
+                if (blockScope.isNullOrEmpty()) {
+                    func.addStatement("@Composable { index -> ")
+                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, null)")
+                } else {
+                    func.addStatement("@Composable { index, scope -> ")
+                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
+                }
                 func.endControlFlow()
                 func.addStatement("} else {")
                 func.addStatement("null")
                 func.addStatement("},")
             } else {
-                func.addStatement("${it.slot} = @Composable { index -> ")
-                func.beginControlFlow("if (${it.slot} != null)")
-                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
+                if (blockScope.isNullOrEmpty()) {
+                    func.addStatement("${it.slot} = @Composable { index -> ")
+                    func.beginControlFlow("if (${it.slot} != null)")
+                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, null)")
+                } else {
+                    func.addStatement("${it.slot} = @Composable { index, scope -> ")
+                    func.beginControlFlow("if (${it.slot} != null)")
+                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
+                }
                 func.endControlFlow()
                 func.addStatement("},")
             }

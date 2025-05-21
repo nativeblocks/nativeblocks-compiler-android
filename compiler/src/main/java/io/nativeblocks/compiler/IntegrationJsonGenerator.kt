@@ -36,7 +36,12 @@ internal fun KSAnnotation.generateIntegrationJson(
     val deprecatedReason = getArgument<String>("deprecatedReason")
 
     if (keyType.onlyLettersAndUnderscore().not()) {
-        throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention)
+        if(keyType.split("/").size == 2){
+            if(keyType.split("/")[1].onlyLettersAndUnderscore().not()){
+                throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention)
+            }
+            keyType.onlyLettersAndUnderscore().not()
+        }else throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention)
     }
 
     val check = integrationKeyTypes.find { it.uppercase() == keyType.uppercase() }
