@@ -17,12 +17,11 @@ import io.nativeblocks.compiler.type.Then
 import io.nativeblocks.compiler.util.Diagnostic
 import io.nativeblocks.compiler.util.DiagnosticType
 import io.nativeblocks.compiler.util.getArgument
-import io.nativeblocks.compiler.util.onlyLettersAndUnderscore
+import io.nativeblocks.compiler.util.onlyLettersUnderscoreAndSlash
+
 import io.nativeblocks.compiler.util.plusAssign
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 internal fun KSAnnotation.generateIntegrationJson(
     kind: String,
@@ -36,8 +35,8 @@ internal fun KSAnnotation.generateIntegrationJson(
     val deprecated = getArgument<Boolean>("deprecated")
     val deprecatedReason = getArgument<String>("deprecatedReason")
 
-    if (keyType.onlyLettersAndUnderscore().not()) {
-        throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention)
+    if (keyType.onlyLettersUnderscoreAndSlash().not()) {
+        throw Diagnostic.exceptionDispatcher(DiagnosticType.IntegrationKeyTypeConvention(keyType))
     }
 
     val check = integrationKeyTypes.find { it.uppercase() == keyType.uppercase() }
@@ -107,7 +106,7 @@ internal fun KSAnnotation.generatePropertyJson(
     val typeClass = param.type.resolve().declaration.qualifiedName?.asString().orEmpty()
     val type = if (isPrimitiveType(typeClass)) {
         typeMapper(key, typeClass)
-    }else "STRING"
+    } else "STRING"
 
     val propertyJson = Property(
         key = key,
