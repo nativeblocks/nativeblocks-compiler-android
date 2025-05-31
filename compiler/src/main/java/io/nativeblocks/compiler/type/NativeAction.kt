@@ -7,6 +7,7 @@ package io.nativeblocks.compiler.type
  * @property name The name of the action.
  * @property description A description of the action.
  * @property version The version of the action. Defaults to 1.
+ * @property versionName The version name of the action. Defaults to an empty string.
  * @property deprecated Indicates if the action is deprecated.
  * @property deprecatedReason Reason for deprecation, if applicable.
  */
@@ -16,6 +17,7 @@ annotation class NativeAction(
     val name: String,
     val description: String,
     val version: Int = 1,
+    val versionName: String = "",
     val deprecated: Boolean = false,
     val deprecatedReason: String = ""
 )

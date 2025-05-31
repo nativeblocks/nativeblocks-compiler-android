@@ -12,6 +12,7 @@ typealias BlockIndex = Int
  * @property name The name of the block.
  * @property description A description of the block.
  * @property version The version of the block. Defaults to 1.
+ * @property versionName The version Name of the block. Defaults an empty string.
  * @property deprecated Indicates if the block is deprecated.
  * @property deprecatedReason Reason for deprecation, if applicable.
  */
@@ -21,6 +22,7 @@ annotation class NativeBlock(
     val name: String,
     val description: String,
     val version: Int = 1,
+    val versionName: String = "",
     val deprecated: Boolean = false,
     val deprecatedReason: String = ""
 )

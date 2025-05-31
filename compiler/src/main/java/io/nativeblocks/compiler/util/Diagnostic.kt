@@ -9,7 +9,7 @@ object Diagnostic {
             }
 
             is DiagnosticType.IntegrationKeyTypeConvention -> {
-                return IllegalArgumentException("Integration keyType must contain only letter or underscore")
+                return IllegalArgumentException("Integration keyType ${(type.keyType)} must contain only letters, underscores, or slashes")
             }
 
             is DiagnosticType.IntegrationKeyTypeUniqueness -> {
@@ -57,7 +57,7 @@ object Diagnostic {
 
 sealed interface DiagnosticType {
     data object KspArgNotFound : DiagnosticType
-    data object IntegrationKeyTypeConvention : DiagnosticType
+    data class IntegrationKeyTypeConvention(val keyType: String) : DiagnosticType
     data class IntegrationKeyTypeUniqueness(val keyType: String) : DiagnosticType
     data class MetaCustomType(val key: String, val type: String) : DiagnosticType
     data class MetaCustomPicker(val filePath: String, val key: String) : DiagnosticType
