@@ -126,16 +126,16 @@ internal class BlockVisitor(
             }
             if (type.isMarkedNullable) {
                 func.beginControlFlow("${it.slot} = if (${it.slot} != null)")
-                func.addStatement("@Composable { index -> ")
-                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
+                func.addStatement("@Composable { index, scope -> ")
+                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
                 func.endControlFlow()
                 func.addStatement("} else {")
                 func.addStatement("null")
                 func.addStatement("},")
             } else {
-                func.addStatement("${it.slot} = @Composable { index -> ")
+                func.addStatement("${it.slot} = @Composable { index, scope -> ")
                 func.beginControlFlow("if (${it.slot} != null)")
-                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index)")
+                func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
                 func.endControlFlow()
                 func.addStatement("},")
             }
