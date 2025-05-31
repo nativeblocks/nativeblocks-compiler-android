@@ -25,6 +25,6 @@ internal fun String.capitalize() =
 internal fun String.camelcase() =
     replaceFirstChar { if (it.isUpperCase()) it.lowercase() else it.toString() }
 
-fun String.onlyLettersAndUnderscore() = all { it.isLetter() or (it == '_') }
+fun String.onlyLettersAndUnderscore() = all { it.isLetter() || it == '_' }
 
 internal fun String.stringify() = this.replace("\\", "\\\\").replace("\"", "\\\"")

@@ -8,6 +8,7 @@ internal data class Integration(
     val name: String,
     val description: String,
     val version: Int,
+    val versionName: String,
     val deprecated: Boolean,
     val deprecatedReason: String,
     val documentation: String,
