@@ -17,18 +17,23 @@ internal class ActionProviderVisitor(
     integrations: MutableList<ActionFunctionModel>,
 ) : KSVisitorVoid() {
 
-    private val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
+    private val importNativeblocksManager =
+        ClassName("io.nativeblocks.core.api", "NativeblocksManager")
 
     init {
         val func = FunSpec.builder("provideActions")
-
+        func.addParameter(
+            ParameterSpec.builder("instanceName", String::class)
+                .defaultValue("%S", "default")
+                .build()
+        )
         integrations.forEach {
             func.addParameter(
                 ParameterSpec(it.className.camelcase(), ClassName(it.packageName, it.className))
             )
         }
 
-        func.addStatement("NativeblocksManager.getInstance()")
+        func.addStatement("NativeblocksManager.getInstance(instanceName)")
         integrations.map {
             func.addCode(
                 """
