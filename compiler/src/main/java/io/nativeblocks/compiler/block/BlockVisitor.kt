@@ -47,12 +47,13 @@ internal class BlockVisitor(
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
         val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValue")
         val importBlockProvideSlot = ClassName("io.nativeblocks.core.api.util", "blockProvideSlot")
+        val importBlockHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "blockHandleTypeConverter")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
             .addAnnotation(importComposable)
             .addParameter("blockProps", importBlockProps)
-            .addStatement("val visibility = blockProps.variables?.get(blockProps.block?.visibility)")
+            .addStatement("val visibility = blockProps.variables.get(blockProps.block?.visibility)")
             .beginControlFlow("""if ((visibility?.value ?: "true") == "false")""")
             .addStatement("return")
             .endControlFlow()
@@ -62,7 +63,7 @@ internal class BlockVisitor(
                     |val data = blockProps.block?.data ?: mapOf()
                     |val properties = blockProps.block?.properties ?: mapOf()
                     |val slots = blockProps.block?.slots ?: mapOf()
-                    |val action = blockProps.actions?.get(blockProps.block?.key)
+                    |val action = blockProps.actions.get(blockProps.block?.key)
                 """.trimMargin()
             )
 
@@ -70,7 +71,7 @@ internal class BlockVisitor(
         func.addComment("block data")
         metaData.forEach {
             func.addStatement("var ${it.key}Value by remember { mutableStateOf(${dataDefaultValueMapper(it)}) }")
-            func.addStatement("val ${it.key} = blockProps.variables?.get(data[\"${it.key}\"]?.value)")
+            func.addStatement("val ${it.key} = blockProps.variables.get(data[\"${it.key}\"]?.value)")
         }
         func.addComment("block data value")
         metaData.forEach {
@@ -131,10 +132,10 @@ internal class BlockVisitor(
                 func.beginControlFlow("${it.slot} = if (${it.slot} != null)")
                 if (blockScope.isNullOrEmpty()) {
                     func.addStatement("@Composable { index -> ")
-                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, null)")
+                    func.addStatement("blockProps.onSubBlock.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, null)")
                 } else {
                     func.addStatement("@Composable { index, scope -> ")
-                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
+                    func.addStatement("blockProps.onSubBlock.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
                 }
                 func.endControlFlow()
                 func.addStatement("} else {")
@@ -144,11 +145,11 @@ internal class BlockVisitor(
                 if (blockScope.isNullOrEmpty()) {
                     func.addStatement("${it.slot} = @Composable { index -> ")
                     func.beginControlFlow("if (${it.slot} != null)")
-                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, null)")
+                    func.addStatement("blockProps.onSubBlock.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, null)")
                 } else {
                     func.addStatement("${it.slot} = @Composable { index, scope -> ")
                     func.beginControlFlow("if (${it.slot} != null)")
-                    func.addStatement("blockProps.onSubBlock?.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
+                    func.addStatement("blockProps.onSubBlock.invoke(blockProps.block?.subBlocks.orEmpty(), ${it.slot}, index, scope)")
                 }
                 func.endControlFlow()
                 func.addStatement("},")
@@ -180,7 +181,7 @@ internal class BlockVisitor(
                 it.dataBinding.forEachIndexed { index, dataBound ->
                     func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
                         .beginControlFlow("if (${dataBound}Updated != null)")
-                        .addStatement("blockProps.onVariableChange?.invoke(${dataBound}Updated)")
+                        .addStatement("blockProps.onVariableChange.invoke(${dataBound}Updated)")
                         .endControlFlow()
                 }
                 func.addStatement("${it.event}?.invoke()")
@@ -192,6 +193,7 @@ internal class BlockVisitor(
         val blockClass = FileSpec.builder(packageName, fileName)
             .addImport(importBlockFunction, "")
             .addImport(importBlockProvideSlot, "")
+            .addImport(importBlockHandleTypeConverter,"")
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
@@ -218,7 +220,7 @@ internal class BlockVisitor(
             "kotlin.Float" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
             "kotlin.Double" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
             "kotlin.Boolean" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> """NativeblocksManager.getInstance().getTypeConverter(${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}" ))"""
+            else -> """blockHandleTypeConverter(blockProps, ${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}" ))"""
         }
     }
 
