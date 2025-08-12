@@ -52,6 +52,7 @@ internal class ActionVisitor(
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
         val importActionHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "actionHandleVariableValue")
+        val importActionHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "actionHandleTypeConverter")
 
         val func = FunSpec.builder("handle")
             .addModifiers(KModifier.OVERRIDE)
@@ -68,7 +69,7 @@ internal class ActionVisitor(
         func.addStatement("")
         func.addComment("action trigger data")
         metaData.forEach {
-            func.addStatement("val ${it.key} = actionProps.variables?.get(data[\"${it.key}\"]?.value)")
+            func.addStatement("val ${it.key} = actionProps.variables.get(data[\"${it.key}\"]?.value)")
         }
 
         func.addComment("action trigger data value")
@@ -110,25 +111,25 @@ internal class ActionVisitor(
             it.dataBinding.forEachIndexed { index, dataBound ->
                 func.addStatement("val ${dataBound}Updated = $dataBound?.copy(value = p${index}.toString())")
                     .beginControlFlow("if (${dataBound}Updated != null)")
-                    .addStatement("actionProps.onVariableChange?.invoke(${dataBound}Updated)")
+                    .addStatement("actionProps.onVariableChange.invoke(${dataBound}Updated)")
                     .endControlFlow()
             }
             when (it.then) {
                 "SUCCESS" -> {
                     func.beginControlFlow("actionProps.trigger?.let")
-                        .addStatement("actionProps.onHandleSuccessNextTrigger?.invoke(it)")
+                        .addStatement("actionProps.onHandleSuccessNextTrigger.invoke(it)")
                         .endControlFlow()
                 }
 
                 "FAILURE" -> {
                     func.beginControlFlow("actionProps.trigger?.let")
-                        .addStatement("actionProps.onHandleFailureNextTrigger?.invoke(it)")
+                        .addStatement("actionProps.onHandleFailureNextTrigger.invoke(it)")
                         .endControlFlow()
                 }
 
                 "NEXT" -> {
                     func.beginControlFlow("actionProps.trigger?.let")
-                        .addStatement("actionProps.onHandleNextTrigger?.invoke(it)")
+                        .addStatement("actionProps.onHandleNextTrigger.invoke(it)")
                         .endControlFlow()
                 }
 
@@ -155,6 +156,7 @@ internal class ActionVisitor(
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
             .addImport(importActionHandleVariableValue, "")
+            .addImport(importActionHandleTypeConverter, "")
             .addImport(importNativeblocksManager, "")
             .addType(
                 TypeSpec.classBuilder(fileName)
@@ -180,7 +182,7 @@ internal class ActionVisitor(
             "kotlin.Float" -> """properties["${prop.key}"]?.value?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
             "kotlin.Double" -> """properties["${prop.key}"]?.value?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
             "kotlin.Boolean" -> """properties["${prop.key}"]?.value?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> """NativeblocksManager.getInstance().getTypeConverter(${prop.typeClass}::class).fromString(properties["${prop.key}"]?.value ?: "${prop.value.stringify()}")"""
+            else -> """actionHandleTypeConverter(actionProps, ${prop.typeClass}::class).fromString(properties["${prop.key}"]?.value ?: "${prop.value.stringify()}")"""
         }
     }
 
