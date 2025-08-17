@@ -53,7 +53,7 @@ internal class BlockVisitor(
             .addModifiers(KModifier.OVERRIDE)
             .addAnnotation(importComposable)
             .addParameter("blockProps", importBlockProps)
-            .addStatement("val visibility = blockProps.variables.get(blockProps.block?.visibility)")
+            .addStatement("val visibility = blockProps.onFindVariable.invoke(blockProps.block?.visibility.orEmpty())")
             .beginControlFlow("""if ((visibility?.value ?: "true") == "false")""")
             .addStatement("return")
             .endControlFlow()
@@ -63,15 +63,13 @@ internal class BlockVisitor(
                     |val data = blockProps.block?.data ?: mapOf()
                     |val properties = blockProps.block?.properties ?: mapOf()
                     |val slots = blockProps.block?.slots ?: mapOf()
-                    |val action = blockProps.actions.get(blockProps.block?.key)
                 """.trimMargin()
             )
-
         func.addStatement("")
         func.addComment("block data")
         metaData.forEach {
             func.addStatement("var ${it.key}Value by remember { mutableStateOf(${dataDefaultValueMapper(it)}) }")
-            func.addStatement("val ${it.key} = blockProps.variables.get(data[\"${it.key}\"]?.value)")
+            func.addStatement("val ${it.key} = blockProps.onFindVariable.invoke(data[\"${it.key}\"]?.value.orEmpty())")
         }
         func.addComment("block data value")
         metaData.forEach {
@@ -93,7 +91,7 @@ internal class BlockVisitor(
         }
         func.addComment("block events")
         metaEvents.forEach {
-            func.addStatement("val ${it.event} = blockProvideEvent(blockProps, action.orEmpty(), \"${it.event}\")")
+            func.addStatement("val ${it.event} = blockProvideEvent(blockProps, \"${it.event}\")")
         }
         func.addComment("call the function")
 
