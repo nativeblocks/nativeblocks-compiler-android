@@ -48,6 +48,7 @@ internal class BlockVisitor(
         val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValue")
         val importBlockProvideSlot = ClassName("io.nativeblocks.core.api.util", "blockProvideSlot")
         val importBlockHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "blockHandleTypeConverter")
+        val importRememberConvertedValue = ClassName("io.nativeblocks.core.api.util", "rememberConvertedValue")
 
         val func = FunSpec.builder("BlockView")
             .addModifiers(KModifier.OVERRIDE)
