@@ -40,7 +40,6 @@ internal class BlockVisitor(
         val importSetValue = ClassName("androidx.compose.runtime", "setValue")
 
         val importBlockProps = ClassName("io.nativeblocks.core.api.provider.block", "BlockProps")
-        val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
         val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.api.util", "findWindowSizeClass")
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.api.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
@@ -50,8 +49,7 @@ internal class BlockVisitor(
         val importBlockHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "blockHandleTypeConverter")
         val importRememberConvertedValue = ClassName("io.nativeblocks.core.api.util", "rememberConvertedValue")
 
-        val func = FunSpec.builder("BlockView")
-            .addModifiers(KModifier.OVERRIDE)
+        val func = FunSpec.builder(fileName)
             .addAnnotation(importComposable)
             .addParameter("blockProps", importBlockProps)
             .addStatement("val visibility = blockProps.onFindVariable.invoke(blockProps.block?.visibility.orEmpty())")
@@ -203,12 +201,8 @@ internal class BlockVisitor(
             .addImport(importMutableStateOf, "")
             .addImport(importRemember, "")
             .addImport(importSetValue, "")
-            .addType(
-                TypeSpec.classBuilder(fileName)
-                    .addSuperinterface(importINativeBlock)
-                    .addFunction(func.build())
-                    .build()
-            ).build()
+            .addFunction(func.build())
+          .build()
         file += blockClass.toString()
     }
 
