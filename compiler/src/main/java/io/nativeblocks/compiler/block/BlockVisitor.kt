@@ -83,7 +83,7 @@ internal class BlockVisitor(
         }
         func.addComment("block properties")
         metaProperties.forEach {
-            func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
+            func.addStatement("val ${it.key}${propTypeMapper(it)}")
         }
         func.addComment("block slots")
         metaSlots.forEach {
@@ -191,7 +191,8 @@ internal class BlockVisitor(
         val blockClass = FileSpec.builder(packageName, fileName)
             .addImport(importBlockFunction, "")
             .addImport(importBlockProvideSlot, "")
-            .addImport(importBlockHandleTypeConverter,"")
+            .addImport(importBlockHandleTypeConverter, "")
+            .addImport(importRememberConvertedValue, "")
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
@@ -212,13 +213,13 @@ internal class BlockVisitor(
 
     private fun propTypeMapper(prop: Property): Any {
         return when (prop.typeClass) {
-            "kotlin.String" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}""""
-            "kotlin.Int" -> """findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
-            "kotlin.Long" -> """findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
-            "kotlin.Float" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
-            "kotlin.Double" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
-            "kotlin.Boolean" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> """blockHandleTypeConverter(blockProps, ${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}" ))"""
+            "kotlin.String" -> """ = findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}""""
+            "kotlin.Int" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
+            "kotlin.Long" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
+            "kotlin.Float" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
+            "kotlin.Double" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
+            "kotlin.Boolean" -> """ = findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
+            else -> """ :${prop.typeClass} = rememberConvertedValue(blockProps, "${prop.key}", "${prop.value.stringify()}")"""
         }
     }
 
