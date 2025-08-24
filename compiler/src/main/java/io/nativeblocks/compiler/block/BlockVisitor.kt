@@ -6,8 +6,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
 import io.nativeblocks.compiler.meta.ExtraParam
@@ -170,7 +168,7 @@ internal class BlockVisitor(
                 }
                 func.addStatement("${it.event}.invoke()")
                 func.addStatement("}")
-                func.addStatement("}else {")
+                func.addStatement("} else {")
                 func.addStatement("null")
                 func.addStatement("},")
             } else {
@@ -187,7 +185,7 @@ internal class BlockVisitor(
         }
         func.addCode(")")
 
-        val blockClass = FileSpec.builder(packageName, fileName)
+        val blockFile = FileSpec.builder(packageName, fileName)
             .addImport(importBlockFunction, "")
             .addImport(importBlockProvideSlot, "")
             .addImport(importBlockHandleTypeConverter, "")
@@ -203,7 +201,7 @@ internal class BlockVisitor(
             .addImport(importSetValue, "")
             .addFunction(func.build())
           .build()
-        file += blockClass.toString()
+        file += blockFile.toString()
     }
 
     private fun propTypeMapper(prop: Property): Any {
