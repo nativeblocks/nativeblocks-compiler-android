@@ -6,8 +6,6 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.TypeSpec
 import io.nativeblocks.compiler.meta.Data
 import io.nativeblocks.compiler.meta.Event
 import io.nativeblocks.compiler.meta.ExtraParam
@@ -40,7 +38,6 @@ internal class BlockVisitor(
         val importSetValue = ClassName("androidx.compose.runtime", "setValue")
 
         val importBlockProps = ClassName("io.nativeblocks.core.api.provider.block", "BlockProps")
-        val importINativeBlock = ClassName("io.nativeblocks.core.api.provider.block", "INativeBlock")
         val importBlockFindWindowSizeClass = ClassName("io.nativeblocks.core.api.util", "findWindowSizeClass")
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.api.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
@@ -48,12 +45,12 @@ internal class BlockVisitor(
         val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValue")
         val importBlockProvideSlot = ClassName("io.nativeblocks.core.api.util", "blockProvideSlot")
         val importBlockHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "blockHandleTypeConverter")
+        val importRememberConvertedValue = ClassName("io.nativeblocks.core.api.util", "rememberConvertedValue")
 
-        val func = FunSpec.builder("BlockView")
-            .addModifiers(KModifier.OVERRIDE)
+        val func = FunSpec.builder(fileName)
             .addAnnotation(importComposable)
             .addParameter("blockProps", importBlockProps)
-            .addStatement("val visibility = blockProps.variables.get(blockProps.block?.visibility)")
+            .addStatement("val visibility = blockProps.onFindVariable.invoke(blockProps.block?.visibility.orEmpty())")
             .beginControlFlow("""if ((visibility?.value ?: "true") == "false")""")
             .addStatement("return")
             .endControlFlow()
@@ -63,15 +60,13 @@ internal class BlockVisitor(
                     |val data = blockProps.block?.data ?: mapOf()
                     |val properties = blockProps.block?.properties ?: mapOf()
                     |val slots = blockProps.block?.slots ?: mapOf()
-                    |val action = blockProps.actions.get(blockProps.block?.key)
                 """.trimMargin()
             )
-
         func.addStatement("")
         func.addComment("block data")
         metaData.forEach {
             func.addStatement("var ${it.key}Value by remember { mutableStateOf(${dataDefaultValueMapper(it)}) }")
-            func.addStatement("val ${it.key} = blockProps.variables.get(data[\"${it.key}\"]?.value)")
+            func.addStatement("val ${it.key} = blockProps.onFindVariable.invoke(data[\"${it.key}\"]?.value.orEmpty())")
         }
         func.addComment("block data value")
         metaData.forEach {
@@ -85,7 +80,7 @@ internal class BlockVisitor(
         }
         func.addComment("block properties")
         metaProperties.forEach {
-            func.addStatement("val ${it.key} = ${propTypeMapper(it)}")
+            func.addStatement("val ${it.key}${propTypeMapper(it)}")
         }
         func.addComment("block slots")
         metaSlots.forEach {
@@ -93,7 +88,7 @@ internal class BlockVisitor(
         }
         func.addComment("block events")
         metaEvents.forEach {
-            func.addStatement("val ${it.event} = blockProvideEvent(blockProps, action.orEmpty(), \"${it.event}\")")
+            func.addStatement("val ${it.event} = blockProvideEvent(blockProps, \"${it.event}\")")
         }
         func.addComment("call the function")
 
@@ -173,7 +168,7 @@ internal class BlockVisitor(
                 }
                 func.addStatement("${it.event}.invoke()")
                 func.addStatement("}")
-                func.addStatement("}else {")
+                func.addStatement("} else {")
                 func.addStatement("null")
                 func.addStatement("},")
             } else {
@@ -190,10 +185,11 @@ internal class BlockVisitor(
         }
         func.addCode(")")
 
-        val blockClass = FileSpec.builder(packageName, fileName)
+        val blockFile = FileSpec.builder(packageName, fileName)
             .addImport(importBlockFunction, "")
             .addImport(importBlockProvideSlot, "")
-            .addImport(importBlockHandleTypeConverter,"")
+            .addImport(importBlockHandleTypeConverter, "")
+            .addImport(importRememberConvertedValue, "")
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
@@ -203,24 +199,20 @@ internal class BlockVisitor(
             .addImport(importMutableStateOf, "")
             .addImport(importRemember, "")
             .addImport(importSetValue, "")
-            .addType(
-                TypeSpec.classBuilder(fileName)
-                    .addSuperinterface(importINativeBlock)
-                    .addFunction(func.build())
-                    .build()
-            ).build()
-        file += blockClass.toString()
+            .addFunction(func.build())
+          .build()
+        file += blockFile.toString()
     }
 
     private fun propTypeMapper(prop: Property): Any {
         return when (prop.typeClass) {
-            "kotlin.String" -> """findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}""""
-            "kotlin.Int" -> """findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
-            "kotlin.Long" -> """findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
-            "kotlin.Float" -> """findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
-            "kotlin.Double" -> """findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
-            "kotlin.Boolean" -> """findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
-            else -> """blockHandleTypeConverter(blockProps, ${prop.typeClass}::class).fromString((findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}" ))"""
+            "kotlin.String" -> """ = findWindowSizeClass(properties["${prop.key}"]) ?: "${prop.value.stringify()}""""
+            "kotlin.Int" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toIntOrNull() ?: ${prop.value.ifEmpty { 0 }}"""
+            "kotlin.Long" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toLongOrNull() ?: ${prop.value.ifEmpty { 0L }}"""
+            "kotlin.Float" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toFloatOrNull() ?: ${prop.value.ifEmpty { 0.0F }}"""
+            "kotlin.Double" -> """ = findWindowSizeClass(properties["${prop.key}"])?.toDoubleOrNull() ?: ${prop.value.ifEmpty { 0.0 }}"""
+            "kotlin.Boolean" -> """ = findWindowSizeClass(properties["${prop.key}"])?.lowercase()?.toBooleanStrictOrNull() ?: ${prop.value.ifEmpty { false }}"""
+            else -> """ :${prop.typeClass} = rememberConvertedValue(blockProps, "${prop.key}", "${prop.value.stringify()}")"""
         }
     }
 

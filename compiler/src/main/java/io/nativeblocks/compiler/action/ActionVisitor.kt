@@ -69,7 +69,7 @@ internal class ActionVisitor(
         func.addStatement("")
         func.addComment("action trigger data")
         metaData.forEach {
-            func.addStatement("val ${it.key} = actionProps.variables.get(data[\"${it.key}\"]?.value)")
+            func.addStatement("val ${it.key} = actionProps.onFindVariable.invoke(data[\"${it.key}\"]?.value.orEmpty())")
         }
 
         func.addComment("action trigger data value")
