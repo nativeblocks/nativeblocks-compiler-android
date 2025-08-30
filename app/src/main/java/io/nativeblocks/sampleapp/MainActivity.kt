@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
         NativeblocksManager.getInstance().provideEventLogger("app", AppLogger())
         FoundationBlockProvider.provideBlocks()
         DemoBlockProvider.provideBlocks()
-        DemoActionProvider.provideActions(aIBot)
+        DemoActionProvider.provideActions(instanceName = "default", compilerAIChatBot = aIBot)
 
         NativeblocksManager.getInstance().liveKit()
         NativeblocksManager.getInstance().provideTypeConverter(Dp::class, DpNativeType())
