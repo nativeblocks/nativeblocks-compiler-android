@@ -25,7 +25,7 @@ import io.nativeblocks.compiler.type.NativeBlockSlot
 import io.nativeblocks.compiler.type.NativeBlockValuePicker
 import io.nativeblocks.compiler.type.NativeBlockValuePickerOption
 import io.nativeblocks.compiler.type.NativeBlockValuePickerPosition
-import io.nativeblocks.core.util.json.NativeJsonPath
+import io.nativeblocks.core.api.util.NativeJsonPath
 import io.nativeblocks.foundation.util.widthAndHeight
 
 @NativeBlock(
