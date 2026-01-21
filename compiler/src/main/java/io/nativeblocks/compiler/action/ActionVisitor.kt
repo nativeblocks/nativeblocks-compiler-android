@@ -99,6 +99,7 @@ internal class ActionVisitor(
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
         }
+
         metaEvents.forEach {
             val eventArg = functionParameter.primaryConstructor?.parameters?.find { arg ->
                 arg.name?.asString() == it.functionName
@@ -187,13 +188,13 @@ internal class ActionVisitor(
     }
 
     private fun dataTypeMapper(dataItem: Data): Any {
-        return when (dataItem.type) {//actionHandleVariableValue(actionProps,${dataItem.key}) ?: ""
-            "STRING" -> """actionHandleVariableValue(actionProps,${dataItem.key}) ?: "${dataItem.value.stringify()}""""
-            "INT" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
-            "LONG" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """actionHandleVariableValue(actionProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
+        return when (dataItem.type) {
+            "STRING" -> """actionHandleVariableValue(actionProps, ${dataItem.key}) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
+            "BOOLEAN" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }

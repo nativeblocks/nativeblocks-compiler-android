@@ -17,7 +17,7 @@ java {
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     coordinates(ModuleInfo.GROUP_ID, ModuleInfo.ARTIFACT_ID, ModuleInfo.VERSION)
-    signAllPublications()
+//    signAllPublications()
     configure(
         JavaLibrary(
             javadocJar = JavadocJar.Javadoc(),
@@ -59,7 +59,7 @@ dependencies {
 object ModuleInfo {
     const val GROUP_ID = "io.nativeblocks"
     const val ARTIFACT_ID = "nativeblocks-compiler-android"
-    const val VERSION = "1.3.0"
+    const val VERSION = "1.3.0-test-1"
     const val DESCRIPTION = "Nativeblocks compiler SDK for Android"
     const val URL = "https://nativeblocks.io"
 }

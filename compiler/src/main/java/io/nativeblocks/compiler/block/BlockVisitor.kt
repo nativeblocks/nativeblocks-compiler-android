@@ -42,7 +42,8 @@ internal class BlockVisitor(
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.api.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
-        val importBlockHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValue")
+        val importBlockHandleVariableValueWithDeps =
+            ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValueWithDeps")
         val importBlockProvideSlot = ClassName("io.nativeblocks.core.api.util", "blockProvideSlot")
         val importBlockHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "blockHandleTypeConverter")
         val importRememberConvertedValue = ClassName("io.nativeblocks.core.api.util", "rememberConvertedValue")
@@ -66,14 +67,17 @@ internal class BlockVisitor(
         func.addComment("block data")
         metaData.forEach {
             func.addStatement("var ${it.key}Value by remember { mutableStateOf(${dataDefaultValueMapper(it)}) }")
+            func.addStatement("var ${it.key}Dependencies by remember { mutableStateOf<List<Any?>>(emptyList()) }")
             func.addStatement("val ${it.key} = blockProps.onFindVariable.invoke(data[\"${it.key}\"]?.value.orEmpty())")
         }
         func.addComment("block data value")
         metaData.forEach {
             func.addStatement(
                 """
-                    LaunchedEffect(${it.key}) {
+                    LaunchedEffect(${it.key}, ${it.key}Dependencies) {
+                        val result = blockHandleVariableValueWithDeps(blockProps, ${it.key})
                         ${it.key}Value = ${dataTypeMapper(it)}
+                        ${it.key}Dependencies = result.dependencies
                     }
                 """.trimIndent()
             )
@@ -103,9 +107,11 @@ internal class BlockVisitor(
         metaData.map {
             func.addStatement("${it.key} = ${it.key}Value,")
         }
+
         metaProperties.map {
             func.addStatement("${it.key} = ${it.key},")
         }
+
         metaSlots.map {
             val slotArg = function.parameters.find { arg -> arg.name?.asString() == it.slot }
             val type = slotArg?.type?.resolve()
@@ -193,14 +199,14 @@ internal class BlockVisitor(
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
-            .addImport(importBlockHandleVariableValue, "")
+            .addImport(importBlockHandleVariableValueWithDeps, "")
             .addImport(importLaunchedEffect, "")
             .addImport(importGetValue, "")
             .addImport(importMutableStateOf, "")
             .addImport(importRemember, "")
             .addImport(importSetValue, "")
             .addFunction(func.build())
-          .build()
+            .build()
         file += blockFile.toString()
     }
 
@@ -218,12 +224,12 @@ internal class BlockVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """blockHandleVariableValue(blockProps,${dataItem.key}) ?: "${dataItem.value.stringify()}""""
-            "INT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
-            "LONG" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }} """
-            "BOOLEAN" -> """blockHandleVariableValue(blockProps,${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }} """
+            "STRING" -> """result.value ?: "${dataItem.value.stringify()}""""
+            "INT" -> """result.value?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """result.value?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """result.value?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """result.value?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
+            "BOOLEAN" -> """result.value?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }

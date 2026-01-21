@@ -5,7 +5,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-    id("io.nativeblocks.nativeblocks-gradle-plugin").version("1.1.1")
+    id("io.nativeblocks.nativeblocks-gradle-plugin").version("1.2.1")
 }
 val nativeblocksProps = Properties().apply {
     load(FileInputStream(File(rootProject.rootDir, "sample.nativeblocks.properties")))
@@ -53,27 +53,6 @@ android {
     }
 }
 
-nativeblocks {
-    endpoint = nativeblocksProps["endpoint"] as String
-    authToken = nativeblocksProps["authToken"] as String
-    organizationId = nativeblocksProps["organizationId"] as String
-    basePackageName = "io.nativeblocks.sampleapp"
-    moduleName = "Demo"
-}
-
-ksp {
-    arg("basePackageName", "io.nativeblocks.sampleapp")
-    arg("moduleName", "Demo")
-}
-
-nativeblocks {
-    endpoint = nativeblocksProps["endpoint"] as String
-    authToken = nativeblocksProps["authToken"] as String
-    organizationId = nativeblocksProps["organizationId"] as String
-    basePackageName = "io.nativeblocks.sampleapp"
-    moduleName = "Demo"
-}
-
 dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("androidx.core:core-ktx:1.13.1")
@@ -82,9 +61,9 @@ dependencies {
     implementation("androidx.compose.animation:animation:1.7.4")
     implementation("androidx.compose.ui:ui-tooling:1.7.4")
     implementation("io.coil-kt:coil-compose:2.6.0")
-    implementation("io.nativeblocks:nativeblocks-android:1.5.0")
-    implementation("io.nativeblocks:nativeblocks-foundation-android:1.2.0")
-    implementation("io.nativeblocks:nativeblocks-wandkit-android:1.0.5")
+    implementation("io.nativeblocks:nativeblocks-android:1.7.1-test-9")
+    implementation("io.nativeblocks:nativeblocks-foundation-android:1.2.1")
+    implementation("io.nativeblocks:nativeblocks-wandkit-android:1.1.0")
     implementation(project(":compiler"))
     ksp(project(":compiler"))
 }
