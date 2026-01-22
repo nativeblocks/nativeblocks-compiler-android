@@ -7,10 +7,3 @@ plugins {
     id("org.jetbrains.kotlin.jvm").version("1.9.24").apply(false)
     id("com.vanniktech.maven.publish").version("0.29.0").apply(false)
 }
-subprojects {
-    configurations.all {
-        resolutionStrategy.force(
-            "io.nativeblocks:nativeblocks-android:1.7.1-test-9"
-        )
-    }
-}
