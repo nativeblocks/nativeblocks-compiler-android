@@ -88,7 +88,7 @@ internal class BlockVisitor(
         }
         func.addComment("block slots")
         metaSlots.forEach {
-            func.addStatement("val ${it.slot} = blockProvideSlot(blockProps, slots, \"${it.slot}\") ")
+            func.addStatement("val ${it.slot} = blockProvideSlot(blockProps, \"${it.slot}\") ")
         }
         func.addComment("block events")
         metaEvents.forEach {
