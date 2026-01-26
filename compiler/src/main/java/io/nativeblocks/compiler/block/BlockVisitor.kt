@@ -42,8 +42,7 @@ internal class BlockVisitor(
         val importBlockProvideEvent = ClassName("io.nativeblocks.core.api.util", "blockProvideEvent")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importBlockFunction = ClassName(consumerPackageName, function.simpleName.asString())
-        val importBlockHandleVariableValueWithDeps =
-            ClassName("io.nativeblocks.core.api.util", "blockHandleVariableValueWithDeps")
+        val importHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "handleVariableValue")
         val importBlockProvideSlot = ClassName("io.nativeblocks.core.api.util", "blockProvideSlot")
         val importBlockHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "blockHandleTypeConverter")
         val importRememberConvertedValue = ClassName("io.nativeblocks.core.api.util", "rememberConvertedValue")
@@ -67,17 +66,15 @@ internal class BlockVisitor(
         func.addComment("block data")
         metaData.forEach {
             func.addStatement("var ${it.key}Value by remember { mutableStateOf(${dataDefaultValueMapper(it)}) }")
-            func.addStatement("var ${it.key}Dependencies by remember { mutableStateOf<List<Any?>>(emptyList()) }")
             func.addStatement("val ${it.key} = blockProps.onFindVariable.invoke(data[\"${it.key}\"]?.value.orEmpty())")
         }
         func.addComment("block data value")
         metaData.forEach {
             func.addStatement(
                 """
-                    LaunchedEffect(${it.key}, ${it.key}Dependencies) {
-                        val result = blockHandleVariableValueWithDeps(blockProps, ${it.key})
+                    LaunchedEffect(${it.key}) {
+                        val result = handleVariableValue(${it.key})
                         ${it.key}Value = ${dataTypeMapper(it)}
-                        ${it.key}Dependencies = result.dependencies
                     }
                 """.trimIndent()
             )
@@ -199,7 +196,7 @@ internal class BlockVisitor(
             .addImport(importBlockFindWindowSizeClass, "")
             .addImport(importBlockProvideEvent, "")
             .addImport(importNativeblocksManager, "")
-            .addImport(importBlockHandleVariableValueWithDeps, "")
+            .addImport(importHandleVariableValue, "")
             .addImport(importLaunchedEffect, "")
             .addImport(importGetValue, "")
             .addImport(importMutableStateOf, "")
@@ -224,12 +221,12 @@ internal class BlockVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """result.value ?: "${dataItem.value.stringify()}""""
-            "INT" -> """result.value?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
-            "LONG" -> """result.value?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """result.value?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """result.value?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """result.value?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
+            "STRING" -> """result ?: "${dataItem.value.stringify()}""""
+            "INT" -> """result?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """result?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """result?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """result?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
+            "BOOLEAN" -> """result?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }

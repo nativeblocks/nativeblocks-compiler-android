@@ -40,18 +40,14 @@ internal class ActionVisitor(
         val importActionProps = ClassName("io.nativeblocks.core.api.provider.action", "ActionProps")
         val importNativeBlockModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeBlockModel")
         val importNativeActionModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionModel")
-        val importNativeActionTriggerModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
-        val importNativeActionTriggerThen =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
-        val importNativeActionTriggerPropertyModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
-        val importNativeActionTriggerDataModel =
-            ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
+        val importNativeActionTriggerModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerModel")
+        val importNativeActionTriggerThen = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerThen")
+        val importNativeActionTriggerPropertyModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerPropertyModel")
+        val importNativeActionTriggerDataModel = ClassName("io.nativeblocks.core.frame.domain.model", "NativeActionTriggerDataModel")
         val importCoroutinesLaunch = ClassName("kotlinx.coroutines", "launch")
         val importNativeblocksManager = ClassName("io.nativeblocks.core.api", "NativeblocksManager")
         val importActionKlass = ClassName(consumerPackageName, klass.simpleName.asString())
-        val importActionHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "actionHandleVariableValue")
+        val importHandleVariableValue = ClassName("io.nativeblocks.core.api.util", "handleVariableValue")
         val importActionHandleTypeConverter = ClassName("io.nativeblocks.core.api.util", "actionHandleTypeConverter")
 
         val func = FunSpec.builder("handle")
@@ -156,7 +152,7 @@ internal class ActionVisitor(
             .addImport(importNativeActionTriggerDataModel, "")
             .addImport(importCoroutinesLaunch, "")
             .addImport(importActionKlass, "")
-            .addImport(importActionHandleVariableValue, "")
+            .addImport(importHandleVariableValue, "")
             .addImport(importActionHandleTypeConverter, "")
             .addImport(importNativeblocksManager, "")
             .addType(
@@ -189,12 +185,12 @@ internal class ActionVisitor(
 
     private fun dataTypeMapper(dataItem: Data): Any {
         return when (dataItem.type) {
-            "STRING" -> """actionHandleVariableValue(actionProps, ${dataItem.key}) ?: "${dataItem.value.stringify()}""""
-            "INT" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
-            "LONG" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
-            "FLOAT" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
-            "DOUBLE" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
-            "BOOLEAN" -> """actionHandleVariableValue(actionProps, ${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
+            "STRING" -> """handleVariableValue(${dataItem.key}) ?: "${dataItem.value.stringify()}""""
+            "INT" -> """handleVariableValue(${dataItem.key})?.toIntOrNull() ?: ${dataItem.value.ifEmpty { 0 }}"""
+            "LONG" -> """handleVariableValue(${dataItem.key})?.toLongOrNull() ?: ${dataItem.value.ifEmpty { 0L }}"""
+            "FLOAT" -> """handleVariableValue(${dataItem.key})?.toFloatOrNull() ?: ${dataItem.value.ifEmpty { 0.0F }}"""
+            "DOUBLE" -> """handleVariableValue(${dataItem.key})?.toDoubleOrNull() ?: ${dataItem.value.ifEmpty { 0.0 }}"""
+            "BOOLEAN" -> """handleVariableValue(${dataItem.key})?.lowercase()?.toBooleanStrictOrNull() ?: ${dataItem.value.ifEmpty { false }}"""
             else -> throw Diagnostic.exceptionDispatcher(DiagnosticType.MetaCustomType(dataItem.key, dataItem.type))
         }
     }
